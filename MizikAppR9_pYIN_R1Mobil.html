@@ -24,6 +24,25 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        body.dark-mode {
+            background: linear-gradient(to bottom, #222, #000);
+            color: #eee;
+        }
+
+        body.dark-mode .panel-box {
+            background-color: #2c2c2c;
+            border-color: #444;
+        }
+
+        body.dark-mode button {
+            background-color: #444;
+            color: #f0f0f0;
+        }
+
+        body.dark-mode button:hover {
+            background-color: #555;
+        }
+
         .content-container {
             width: 100%;
             max-width: 1200px;
@@ -782,6 +801,8 @@
             bottom: 10px;
             right: 10px;
             z-index: 10010;
+            display: flex;
+            gap: 8px;
         }
 
         #language-switcher-container button {
@@ -847,6 +868,7 @@
         <!-- Language Switcher Button -->
         <div id="language-switcher-container">
             <button id="language-toggle-btn">English</button>
+            <button id="dark-mode-toggle" data-translate-key="darkMode">Dark Mode</button>
         </div>
 
         <div id="chromatic-container">
@@ -1158,6 +1180,14 @@
             "languageToggleToTr": {
                 tr: "Türkçe",
                 en: "Turkish"
+            },
+            "darkMode": {
+                tr: "Karanlık Mod",
+                en: "Dark Mode"
+            },
+            "lightMode": {
+                tr: "Aydınlık Mod",
+                en: "Light Mode"
             },
             "harmonicaToneLabel": {
                 tr: "Mızıka Tonu:",
@@ -1630,6 +1660,7 @@
         };
         let currentLanguage = localStorage.getItem('appLanguage_MizikApp') || 'tr';
         const languageToggleButton = document.getElementById('language-toggle-btn');
+        const darkModeToggleButton = document.getElementById('dark-mode-toggle');
 
         function translateText(key, params = {}) {
             const translationSet = translations[key];
@@ -1682,7 +1713,11 @@
             }
             const gameBtn = document.getElementById('start-game-btn');
             if (gameBtn) {
-                gameBtn.innerText = typeof isGameMode !== 'undefined' && isGameMode ? translateText('stopGameBtn') : translateText('startGameBtn')
+                gameBtn.innerText = typeof isGameMode !== 'undefined' && isGameMode ? translateText('stopGameBtn') : translateText('startGameBtn');
+            }
+            if (darkModeToggleButton) {
+                const isDark = document.body.classList.contains('dark-mode');
+                darkModeToggleButton.innerText = translateText(isDark ? 'lightMode' : 'darkMode');
             }
             if (typeof renderGrid === 'function') renderGrid();
             if (typeof renderChromaticPiano === 'function') renderChromaticPiano();
@@ -1721,6 +1756,19 @@
                     });
                     showCurrentLickTarget();
                 }
+            });
+        }
+
+        if (darkModeToggleButton) {
+            const savedDark = localStorage.getItem('darkMode_MizikApp') === 'true';
+            if (savedDark) {
+                document.body.classList.add('dark-mode');
+                darkModeToggleButton.innerText = translateText('lightMode');
+            }
+            darkModeToggleButton.addEventListener('click', () => {
+                const isDark = document.body.classList.toggle('dark-mode');
+                localStorage.setItem('darkMode_MizikApp', isDark);
+                darkModeToggleButton.innerText = translateText(isDark ? 'lightMode' : 'darkMode');
             });
         }
         
