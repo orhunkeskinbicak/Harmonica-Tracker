@@ -1,0 +1,3623 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MizikApp R19 (p-YIN Entegrasyonu)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            padding-top: 5px;
+            background: linear-gradient(to bottom, #f4f6f8, #ffffff);
+            color: #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .content-container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: visible;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #555;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        select,
+        input[type="text"],
+        input[type="checkbox"],
+        button,
+        input[type="file"] {
+            font-size: 1rem;
+            padding: 0.6rem 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+         select {
+             -webkit-appearance: menulist;
+             -moz-appearance: menulist;
+             appearance: menulist;
+         }
+
+        button {
+            background-color: #a8dadc;
+            color: #1d3557;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            border: none;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #bde0e2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        button:disabled {
+            background-color: #ced4da;
+            color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #freq-display {
+            margin: 10px auto;
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-family: monospace;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+            word-break: break-all;
+            min-height: 24px;
+            line-height: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            gap: 6px;
+            margin: 1.5rem auto;
+            justify-content: center;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            font-size: 0.9rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #ccc;
+            background-color: #ffffffcc;
+            color: #333;
+            position: relative;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(10, minmax(0, 1fr));
+                gap: 4px;
+                padding: 0 4px;
+                margin: 1rem auto;
+            }
+
+            .cell {
+                width: 100%;
+                aspect-ratio: 1 / 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.75rem;
+                border-radius: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid {
+                gap: 2px;
+                padding: 0 2px;
+                margin: 0.8rem auto;
+            }
+
+            .cell {
+                font-size: clamp(8px, 2.5vw, 11px);
+                border-radius: 6px;
+            }
+
+            .cell.number {
+                font-size: clamp(9px, 3vw, 12px);
+                font-weight: bold;
+            }
+        }
+
+        .cell.empty,
+        .cell.number {
+            cursor: default;
+        }
+
+        .cell.empty {
+            background-color: transparent;
+            color: transparent;
+            border: none;
+            pointer-events: none;
+            box-shadow: none;
+        }
+
+        .indicator {
+            width: 100%;
+            height: 3px;
+            background-color: #007bff;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .highlight {
+            background-color: #a6e22e !important;
+            color: black !important;
+            border: 1px solid #88cc00 !important;
+        }
+        
+        .playback-highlight {
+            background-color: #8338ec !important; /* Mor çalma vurgusu */
+            color: white !important;
+            border: 1px solid #5a189a !important;
+            box-shadow: 0 0 10px #8338ec;
+        }
+
+        .manual-play-highlight {
+            background-color: #3498db !important; /* Manuel çalma için Mavi vurgu */
+            color: white !important;
+            border: 1px solid #2980b9 !important;
+            box-shadow: 0 0 10px #3498db;
+        }
+
+        .blow {
+            background-color: #fff3e0;
+            border-color: #ffa726;
+            color: #ef6c00;
+        }
+
+        .draw {
+            background-color: #e3f2fd;
+            border-color: #42a5f5;
+            color: #1565c0;
+        }
+
+        .blow-bend {
+            background-color: #ffe0b2;
+            border-color: #fb8c00;
+            color: #e65100;
+        }
+
+        .draw-bend {
+            background-color: #b3e5fc;
+            border-color: #0288d1;
+            color: #01579b;
+        }
+
+        .overblow {
+            background-color: #ffcdd2;
+            border-color: #e53935;
+            color: #b71c1c;
+        }
+
+        .overdraw {
+            background-color: #fff9c4;
+            border-color: #fbc02d;
+            color: #f57f17;
+        }
+
+        .number {
+            background-color: #ccc;
+            color: white;
+            border: none;
+        }
+
+        .hidden {
+            color: transparent !important;
+        }
+
+        .inactive {
+            background: #e9ecef !important;
+            color: rgba(0, 0, 0, 0.3) !important;
+            border: 1px dashed #ced4da !important;
+            pointer-events: none;
+            opacity: 0.6;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .inactive:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        #mic-start-btn,
+        #tab-audio-start-btn {
+            margin: 15px 5px;
+            padding: 8px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+
+        #circle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            margin-top: 20px;
+            max-width: 100%;
+        }
+
+        #circle-of-fifths {
+            width: 300px;
+            height: 300px;
+            max-width: 100%;
+        }
+
+        #circle-of-fifths text {
+            fill: #333;
+            font-size: 14px;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            fill: #222;
+        }
+
+        #circle-of-fifths text:hover {
+            fill: red;
+            font-weight: bolder;
+        }
+
+        #circle-of-fifths circle {
+            stroke-width: 10;
+            stroke: #aaa;
+            fill: none;
+        }
+
+        #chromatic-container {
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 5px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        #chromatic-piano {
+            position: relative;
+            height: 80px;
+            display: flex;
+            align-items: flex-end;
+            width: max-content;
+            margin: 0 auto;
+        }
+
+        .white-key {
+            width: 40px;
+            height: 80px;
+            background: white;
+            border: 1px solid #ccc;
+            position: relative;
+            box-sizing: border-box;
+            z-index: 1;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .black-key {
+            width: 28px;
+            height: 48px;
+            background: black;
+            color: white;
+            position: absolute;
+            top: 0;
+            z-index: 2;
+            text-align: center;
+            font-size: 0.6rem;
+            font-weight: bold;
+            line-height: 48px;
+            border-radius: 0 0 4px 4px;
+            cursor: pointer;
+            box-sizing: border-box;
+            user-select: none;
+			
+        }
+
+
+        .key-highlight {
+            background-color: #a6e22e !important;
+            box-shadow: 0 0 6px #44cc00;
+            border: 2px solid #88cc00 !important;
+        }
+
+        .game-sequence-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 18px;
+            height: 18px;
+            background-color: #007bff;
+            border-radius: 50%;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .cell.expected-note {
+            border-color: #ffc107 !important;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+        }
+
+        .lick-target {
+            border: 2px solid blue !important;
+            position: relative;
+        }
+
+        .lick-number {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0, 102, 255, 0.85);
+            color: white;
+            font-size: 12px;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+        }
+
+        .lick-success-flash {
+            animation: success-flash 0.3s ease-in-out;
+        }
+
+        .lick-error-flash {
+            animation: error-flash 0.3s ease-in-out;
+        }
+
+        @keyframes success-flash {
+            0% {
+                background-color: inherit;
+            }
+
+            50% {
+                background-color: #a6e22e;
+            }
+
+            100% {
+                background-color: inherit;
+            }
+        }
+
+        @keyframes error-flash {
+            0% {
+                background-color: inherit;
+            }
+
+            50% {
+                background-color: #ff4d4d;
+            }
+
+            100% {
+                background-color: inherit;
+            }
+        }
+
+        .panel-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 2rem;
+        }
+
+        .panel-box {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .panel-box:hover {
+            transform: scale(1.015);
+        }
+
+        .panel-box h3 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        .panel-box label {
+            font-weight: 600;
+            display: block;
+            margin: 10px 0 5px;
+            color: #34495e;
+        }
+
+        .panel-box input[type="text"],
+        .panel-box select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 1em;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .panel-box input[type="file"] {
+            padding: 5px;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: block;
+            width: 100%;
+        }
+
+        .panel-box button {
+            margin-top: 12px;
+            padding: 10px 14px;
+            font-size: 1em;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease, opacity 0.2s ease;
+            width: auto;
+            min-width: 100px;
+            text-align: center;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .panel-box button.file-load-btn {
+            background-color: #2ecc71;
+            margin-top: 5px;
+        }
+
+        .panel-box button.file-load-btn:hover {
+            background-color: #27ae60;
+        }
+
+        .panel-box button:last-child {
+            margin-right: 0;
+        }
+        
+        .json-panel-buttons {
+             display: grid;
+             grid-template-columns: 1fr 1fr;
+             gap: 10px;
+             margin-bottom: 10px;
+        }
+         .json-panel-buttons button {
+           width: 100%;
+           margin: 0;
+         }
+         #stop-json-btn {
+           background-color: #e74c3c;
+         }
+        
+        .playback-controls {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .playback-controls > div {
+            flex: 1 1 120px; 
+        }
+        .playback-controls select {
+            margin-top: 0;
+        }
+
+        .recording-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .panel-box button.is-recording {
+            background-color: #e74c3c;
+        }
+
+        .panel-box button.is-recording:hover {
+            background-color: #c0392b;
+        }
+
+        .panel-box p {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .game-panel-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .game-panel-content select#game-level {
+            width: auto;
+            min-width: 120px;
+            max-width: 150px;
+            display: block;
+            margin: 0 auto 10px auto;
+            text-align: center;
+            -webkit-appearance: menulist;
+            -moz-appearance: menulist;
+            appearance: menulist;
+        }
+
+        .arrow-container {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .arrow-container svg {
+            width: 48px;
+            height: 48px;
+            stroke: #888;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: blink 1.5s infinite;
+        }
+
+        .arrow-container svg.single-arrow {
+            transform: translateY(-10px);
+            animation-delay: 0s;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .filter-group,
+        .mode-filter-group {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .filter-group label,
+        .mode-filter-group label {
+            font-weight: normal;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .filter-group input[type="checkbox"],
+        .mode-filter-group input[type="checkbox"] {
+            margin-right: 5px;
+            margin-left: 0;
+            cursor: pointer;
+        }
+
+        .lick-input-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .lick-input-controls input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .lick-input-controls .file-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 5px;
+        }
+
+        #webcam-window {
+            position: fixed;
+            width: 384px; 
+            height: 216px; 
+            min-width: 150px; 
+            min-height: 120px; 
+            border: 2px solid #3498db;
+            background-color: #fdfdfd;
+            padding: 5px;
+            cursor: move;
+            z-index: 10000;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: none;
+            resize: both; 
+            touch-action: none;
+        }
+        
+        #webcam-video {
+            width: 100%;
+            height: 100%; 
+            display: block;
+            border-radius: 4px;
+            object-fit: cover; 
+        }
+
+        #webcam-toggle-button.active {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        #webcam-window.dragging {
+            opacity: 0.7;
+            border-style: dashed;
+        }
+
+        .webcam-controls-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        #resize-handle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            left: 0;
+            bottom: 0;
+            cursor: se-resize;
+            z-index: 10001;
+        }
+
+        #resize-handle::after {
+            content: '';
+            position: absolute;
+            right: 3px;
+            bottom: 3px;
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid #555;
+            border-bottom: 2px solid #555;
+            opacity: 0.7;
+        }
+
+
+        #language-switcher-container {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            z-index: 10010;
+        }
+
+        #language-switcher-container button {
+            padding: 8px 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #language-switcher-container button:hover {
+            background-color: #e0e0e0;
+        }
+       
+        @media (max-width: 740px) {
+            .panel-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .panel-box {
+                max-width: 100%;
+            }
+            
+            .filter-group, .mode-filter-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .arrow-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            #circle-container {
+                margin-top: 20px;
+            }
+            .json-panel-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1080px) {
+            #tab-audio-start-btn {
+                display: none;
+            }
+            #chromatic-container {
+                display: none;
+            }
+            .filter-group, .mode-filter-group {
+                flex-direction: row;
+                align-items: center;
+            }
+	
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content-container">
+        <!-- Language Switcher Button -->
+        <div id="language-switcher-container">
+            <button id="language-toggle-btn">English</button>
+        </div>
+
+        <div id="chromatic-container">
+            <div id="chromatic-piano"></div>
+        </div>
+
+        <h1 data-translate-key="appTitle">HarpApp</h1>
+
+        <div>
+            <label for="transpose" data-translate-key="harmonicaToneLabel">Mızıka Tonu:</label>
+            <select id="transpose">
+                <option value="G2">G Low</option>
+                <option value="G#2">A♭ Low</option>
+                <option value="A2">A Low</option>
+                <option value="A#2">B♭ Low</option>
+                <option value="B2">B Low</option>
+                <option value="C3">C Low</option>
+                <option value="C#3">C# Low</option>
+                <option value="D3">D Low</option>
+                <option value="D#3">E♭ Low</option>
+                <option value="E3">E Low</option>
+                <option value="F3">F Low</option>
+                <option value="F#3">F# Low</option>
+                <option value="G3">G</option>
+                <option value="G#3">A♭</option>
+                <option value="A3">A</option>
+                <option value="A#3">B♭</option>
+                <option value="B3">B</option>
+                <option value="C4" selected>C</option>
+                <option value="C#4">C#</option>
+                <option value="D4">D</option>
+                <option value="D#4">E♭</option>
+                <option value="E4">E</option>
+                <option value="F4">F</option>
+                <option value="F#4">F# High</option>
+                <option value="G4">G High</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label><input type="checkbox" class="filter" data-class="draw-bend" checked> <span data-translate-key="filterDrawBend">Draw Bend</span></label>
+            <label><input type="checkbox" class="filter" data-class="blow-bend" checked> <span data-translate-key="filterBlowBend">Blow Bend</span></label>
+            <label><input type="checkbox" class="filter" data-class="overblow" checked> <span data-translate-key="filterOverblow">Overblow</span></label>
+            <label><input type="checkbox" class="filter" data-class="overdraw" checked> <span data-translate-key="filterOverdraw">Overdraw</span></label>
+        </div>
+
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <button id="mic-start-btn" data-translate-key="micStartBtn">Mikrofonu Başlat</button>
+            <button id="tab-audio-start-btn" data-translate-key="tabAudioStartBtn">Sekme Sesi Yakala</button>
+        </div>
+
+        <div id="game-status" style="margin-top: 10px; font-weight: bold; min-height: 1.2em; text-align: center;"></div>
+
+        <div class="grid" id="harmonica-grid"></div>
+
+        <div id="freq-display"><span data-translate-key="freqLabel">Frekans</span>: -- Hz</div>
+
+        <div class="arrow-container">
+            <svg viewBox="0 0 24 24" fill="none" class="single-arrow">
+                <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke-width="2" />
+            </svg>
+        </div>
+
+        <div class="panel-container">
+            <div class="panel-box">
+                <h3 data-translate-key="practiceNotesTitle">Çalışma Notaları Girişi</h3>
+                <label for="lick-input" data-translate-key="practiceNotesLabel">Çalışma Notalarını Girin (veya Dosyadan Yükleyin):</label>
+                <div class="lick-input-controls">
+                    <input type="text" id="lick-input" placeholder="Ör: 1 2' +2 +4o +4 +10'' 6o (1 2 3)" data-translate-key="practiceNotesPlaceholder" data-translate-target="placeholder">
+                    <button onclick="setLick()" data-translate-key="applyBtn">Uygula</button>
+                    <div class="file-input-container">
+                        <input type="file" id="lick-file-input" accept=".txt" style="margin-top: 10px;">
+                        <button onclick="loadLickFromFile()" class="file-load-btn" data-translate-key="loadFileBtn">Dosyadan Yükle (.txt)</button>
+                    </div>
+                </div>
+                <p data-translate-key="tabInputNote">Not: TAB için harf, `#`, `♭`, `'`, `o`, `+` gibi işaretleri kullanabilirsiniz.</p>
+            </div>
+
+            <div class="panel-box">
+                <h3 data-translate-key="tabRecordingTitle">TAB Kaydetme</h3>
+                <div class="recording-buttons">
+                    <button id="startRecordBtn" onclick="startRecording()" data-translate-key="startRecordBtn">Kayıt Başlat</button>
+                    <button id="stopRecordBtn" onclick="stopRecording()" data-translate-key="stopRecordBtn">Kayıt Durdur</button>
+                    <button onclick="exportTabsToCSV()" data-translate-key="exportTabsBtn">TAB Kaydet (.txt)</button>
+                </div>
+                <p data-translate-key="tabRecordingNote">TAB kayıtlarını başlatmak, durdurmak ve dışa aktarmak için yukarıdaki butonları kullanın.</p>
+            </div>
+
+            <!-- JSON Recording Panel -->
+            <div class="panel-box">
+                <h3 data-translate-key="jsonRecordingTitle">Nota Dizisi Kaydı (JSON)</h3>
+                <div class="json-panel-buttons">
+                    <button id="start-json-record-btn" data-translate-key="startJsonRecordBtn">Kayıt Başlat</button>
+                    <button id="stop-json-record-btn" data-translate-key="stopJsonRecordBtn">Kayıt Durdur</button>
+                    <button id="export-json-btn" data-translate-key="exportJsonBtn">Kaydet (.json)</button>
+                    <button id="import-json-btn" data-translate-key="importJsonBtn">Yükle (.json)</button>
+                    <input type="file" id="import-json-input" accept=".json" style="display: none;"/>
+                </div>
+                 <div class="json-panel-buttons">
+                     <button id="play-json-btn" style="background-color: #8338ec;" data-translate-key="playJsonBtn">Yükleneni Çal</button>
+                     <button id="stop-json-btn" data-translate-key="stopPlaybackBtn">Çalmayı Durdur</button>
+                 </div>
+                 <div class="playback-controls">
+                    <div>
+                        <label for="sound-type" data-translate-key="soundTypeLabel">Ses Tipi:</label>
+                        <select id="sound-type">
+                            <option value="harmonica" data-translate-key="soundHarmonica">Harmonika</option>
+                            <option value="distorted-harp" data-translate-key="soundDistortedHarp">Distortionlu Harp</option>
+                            <option value="organ" data-translate-key="soundOrgan">Organ</option>
+                            <option value="flute" data-translate-key="soundFlute">Flüt</option>
+                            <option value="guitar" data-translate-key="soundGuitar">Gitar</option>
+                            <option value="sine" data-translate-key="soundSine">Sine</option>
+                            <option value="square" data-translate-key="soundSquare">Kare</option>
+                            <option value="triangle" data-translate-key="soundTriangle">Üçgen</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="playback-speed" data-translate-key="playbackSpeedLabel">Çalma Hızı:</label>
+                        <select id="playback-speed">
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1x (Normal)</option>
+                        </select>
+                    </div>
+                    <!-- YENİ EKLENEN KONTROL -->
+                    <div>
+                        <label for="recording-precision" data-translate-key="recPrecisionLabel">Kayıt Hassasiyeti:</label>
+                        <select id="recording-precision">
+                            <option value="normal" data-translate-key="precisionNormal">Normal (90ms)</option>
+                            <option value="high" selected data-translate-key="precisionHigh">Yüksek (50ms)</option>
+                            <option value="max" data-translate-key="precisionMax">Maksimum (30ms)</option>
+                        </select>
+                    </div>
+                    <!-- YENİ KONTROL SONU -->
+                 </div>
+                <p data-translate-key="jsonRecordingNote">Notaları başlangıç zamanı ve süreleriyle kaydedin, kaydedin, yükleyin ve çalın.</p>
+            </div>
+            <!-- END JSON Panel -->
+
+            <div class="panel-box">
+                <h3 data-translate-key="gameModeTitle">Oyun Modu</h3>
+                <div class="game-panel-content">
+                    <button id="start-game-btn" data-translate-key="startGameBtn">Oyunu Başlat</button>
+                    <label for="game-level" data-translate-key="gameLevelLabel">Oyun Seviyesi:</label>
+                    <select id="game-level">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                <p data-translate-key="gameModeNote">Oyunu başlatmak ve seviye seçmek için bu paneli kullanın.</p>
+            </div>
+
+            <div class="panel-box">
+                <h3 data-translate-key="webcamControlsTitle">Webcam Kontrolleri</h3>
+                <div class="webcam-controls-container">
+                    <button id="webcam-toggle-button" data-translate-key="webcamOpenBtn">Webcam'i Aç</button>
+                </div>
+                <p data-translate-key="webcamNote">Görsel yardım için webcam'inizi açıp kapatabilirsiniz. Pencereyi sürükleyebilirsiniz.</p>
+            </div>
+        </div>
+
+        <div id="circle-container">
+            <svg viewBox="0 0 300 300" id="circle-of-fifths">
+                <circle cx="150" cy="150" r="140" stroke="#aaa" stroke-width="1" fill="none" />
+                <g id="circle-notes"></g>
+            </svg>
+        </div>
+
+        <div class="mode-filter-group">
+            <label><input type="checkbox" class="mode-filter" id="major-mode"> <span data-translate-key="showMajorScale">Sadece Majör Dizisini Göster (1. Pozisyon)</span></label>
+            <label><input type="checkbox" class="mode-filter" id="1-blues-mode"> <span data-translate-key="show1stPosBlues">Sadece Blues Dizisini Göster (1. Pozisyon)</span></label>
+            <label><input type="checkbox" class="mode-filter" id="blues-mode"> <span data-translate-key="show2ndPosBlues">Sadece Blues Dizisini Göster (2. Pozisyon)</span></label>
+            <label><input type="checkbox" class="mode-filter" id="3-blues-mode"> <span data-translate-key="show3rdPosBlues">Sadece Blues Dizisini Göster (3. Pozisyon)</span></label>
+            <label><input type="checkbox" class="mode-filter" id="h-minor-mode"> <span data-translate-key="showHarmonicMinor">Sadece Harmonik Minör Dizisini Göster (4. Pozisyon)</span></label>
+            <label><input type="checkbox" class="mode-filter" id="hicaz-mode"> <span data-translate-key="showHicazScale">Sadece Hicaz Dizisini Göster (12. Pozisyon)</span></label>
+            <label><input type="checkbox" class="mode-filter" id="minor-mode"> <span data-translate-key="showMinorScale">Sadece Minör Dizisini Göster (4. Pozisyon)</span></label>
+        </div>
+
+        <div id="webcam-window">
+            <video id="webcam-video" autoplay playsinline muted></video>
+            <div id="resize-handle"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- p-YIN Worker Script ---
+        const pYINWorkerScript = `
+            let sampleRate;
+            let yinBuffer;
+            let yinBufferSize;
+            const YIN_THRESHOLD = 0.20; // Adjusted for better sensitivity
+            const YIN_PROBABILITY_THRESHOLD = 0.7; // Minimum probability to be considered "voiced"
+
+            /**
+             * The core pYIN processing function.
+             * @param {Float32Array} buffer The audio buffer to analyze.
+             */
+            function getPitch(buffer) {
+                if (!sampleRate) return { pitch: -1, probability: 0 };
+
+                // Step 1: Autocorrelation function (simplified)
+                const squaredBuffer = new Float32Array(yinBufferSize / 2);
+                for (let i = 0; i < yinBufferSize / 2; i++) {
+                    squaredBuffer[i] = buffer[i] * buffer[i];
+                }
+
+                // Step 2: YIN Difference Function
+                const yinDifference = new Float32Array(yinBufferSize / 2);
+                for (let tau = 1; tau < yinBufferSize / 2; tau++) {
+                    let sum = 0;
+                    for (let i = 0; i < yinBufferSize / 2; i++) {
+                        sum += Math.pow(buffer[i] - buffer[i + tau], 2);
+                    }
+                    yinDifference[tau] = sum;
+                }
+
+                // Step 3: Cumulative Mean Normalized Difference Function
+                const cmndf = new Float32Array(yinBufferSize / 2);
+                cmndf[0] = 1;
+                let runningSum = 0;
+                for (let tau = 1; tau < yinBufferSize / 2; tau++) {
+                    runningSum += yinDifference[tau];
+                    if (runningSum === 0) {
+                        cmndf[tau] = 1;
+                    } else {
+                        cmndf[tau] = yinDifference[tau] * tau / runningSum;
+                    }
+                }
+                
+                // Step 4: Find Local Minima below the threshold (this is the key pYIN-like step)
+                let period = -1;
+                let probability = 0.0;
+                let minVal = 1.0;
+
+                for (let tau = 2; tau < yinBufferSize / 2; tau++) {
+                    if (cmndf[tau] < YIN_THRESHOLD) {
+                        // Check if it's a local minimum
+                        if (cmndf[tau] < cmndf[tau - 1] && cmndf[tau] < cmndf[tau + 1]) {
+                             // Parabolic interpolation for better accuracy
+                             const x1 = tau - 1;
+                             const x2 = tau;
+                             const x3 = tau + 1;
+                             const y1 = cmndf[x1];
+                             const y2 = cmndf[x2];
+                             const y3 = cmndf[x3];
+                             const a = (y1 + y3 - 2 * y2) / 2;
+                             const b = (y3 - y1) / 2;
+                             
+                             let estimatedTau = tau;
+                             if (a !== 0) {
+                                 const betterTau = tau - b / (2 * a);
+                                 if (betterTau > x1 && betterTau < x3) {
+                                     estimatedTau = betterTau;
+                                 }
+                             }
+
+                            // This is a simplified probability calculation.
+                            // A true pYIN uses a more complex model (HMM), but this gives a good estimate.
+                            // The lower the CMNDF value, the higher the probability.
+                            const currentProbability = 1.0 - (cmndf[tau] / YIN_THRESHOLD);
+
+                            // We take the first and best candidate
+                            if (currentProbability > probability) {
+                                period = estimatedTau;
+                                probability = currentProbability;
+                                minVal = cmndf[tau];
+                                // Break after finding the first good candidate for performance
+                                if (probability > YIN_PROBABILITY_THRESHOLD) {
+                                   break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (period === -1 || probability < 0.1) {
+                    return { pitch: -1, probability: 0 };
+                }
+
+                // Convert period to frequency
+                const pitch = sampleRate / period;
+                return { pitch, probability };
+            }
+
+            self.onmessage = (event) => {
+                const data = event.data;
+                if (data.sampleRate) {
+                    sampleRate = data.sampleRate;
+                    yinBufferSize = data.bufferSize;
+                }
+                if (data.buffer) {
+                    const result = getPitch(data.buffer);
+                    self.postMessage(result);
+                }
+            };
+        `;
+
+        // --- Dil Çevirisi (Değişiklik yok) ---
+        const translations = {
+            "appTitle": {
+                tr: "HarpApp",
+                en: "HarpApp"
+            },
+            "languageToggleToEn": {
+                tr: "English",
+                en: "English"
+            },
+            "languageToggleToTr": {
+                tr: "Türkçe",
+                en: "Turkish"
+            },
+            "harmonicaToneLabel": {
+                tr: "Mızıka Tonu:",
+                en: "Harmonica Key:"
+            },
+            "filterDrawBend": {
+                tr: "Draw Bend",
+                en: "Draw Bend"
+            },
+            "filterBlowBend": {
+                tr: "Blow Bend",
+                en: "Blow Bend"
+            },
+            "filterOverblow": {
+                tr: "Overblow",
+                en: "Overblow"
+            },
+            "filterOverdraw": {
+                tr: "Overdraw",
+                en: "Overdraw"
+            },
+            "freqLabel": {
+                tr: "Frekans",
+                en: "Frequency"
+            },
+            "freqUnit": {
+                tr: "Hz",
+                en: "Hz"
+            },
+            "centsUnit": {
+                tr: "cent",
+                en: "cent"
+            },
+            "noteLabel": {
+                tr: "Not",
+                en: "Note"
+            },
+            "unmatchedLabel": {
+                tr: "Eşleşmedi",
+                en: "Unmatched"
+            },
+            "noFreqLabel": {
+                tr: "-- Hz",
+                en: "-- Hz"
+            },
+            "micStartBtn": {
+                tr: "Mikrofonu Başlat",
+                en: "Start Microphone"
+            },
+            "micStopBtn": {
+                tr: "Mikrofonu Durdur",
+                en: "Stop Microphone"
+            },
+            "tabAudioStartBtn": {
+                tr: "Sekme Sesi Yakala",
+                en: "Capture Tab Audio"
+            },
+            "tabAudioStopBtn": {
+                tr: "Sekme Sesi Durdur",
+                en: "Stop Tab Audio"
+            },
+            "applyBtn": {
+                tr: "Uygula",
+                en: "Apply"
+            },
+            "loadFileBtn": {
+                tr: "Dosyadan Yükle (.txt)",
+                en: "Load from File (.txt)"
+            },
+            "startRecordBtn": {
+                tr: "Kayıt Başlat",
+                en: "Start Rec"
+            },
+            "stopRecordBtn": {
+                tr: "Kayıt Durdur",
+                en: "Stop Rec"
+            },
+            "exportTabsBtn": {
+                tr: "TAB Kaydet (.txt)",
+                en: "Save TAB (.txt)"
+            },
+            "startGameBtn": {
+                tr: "Oyunu Başlat",
+                en: "Start Game"
+            },
+            "stopGameBtn": {
+                tr: "Oyunu Durdur",
+                en: "Stop Game"
+            },
+            "webcamOpenBtn": {
+                tr: "Webcam'i Aç",
+                en: "Open Webcam"
+            },
+            "webcamCloseBtn": {
+                tr: "Webcam'i Kapat",
+                en: "Close Webcam"
+            },
+            "practiceNotesTitle": {
+                tr: "Çalışma Notaları Girişi",
+                en: "Practice Notes Input"
+            },
+            "practiceNotesLabel": {
+                tr: "Çalışma Notalarını Girin (veya Dosyadan Yükleyin):",
+                en: "Enter Practice Notes (or Load from File):"
+            },
+            "practiceNotesPlaceholder": {
+                tr: "Ör: 1 2' +2 +4o +4 +10'' 6o (1 2 3)",
+                en: "Ex: 1 2' +2 +4o +4 +10'' 6o (1 2 3)"
+            },
+            "tabInputNote": {
+                tr: "Not: TAB için harf, `#`, `♭`, `'`, `o`, `+` gibi işaretleri kullanabilirsiniz.",
+                en: "Note: For TAB, you can use letters, `#`, `♭`, `'`, `o`, `+` symbols."
+            },
+            "tabRecordingTitle": {
+                tr: "TAB Kaydetme",
+                en: "TAB Recording"
+            },
+            "tabRecordingNote": {
+                tr: "TAB kayıtlarını başlatmak, durdurmak ve dışa aktarmak için yukarıdaki butonları kullanın.",
+                en: "Use the buttons above to start, stop, and export TAB recordings."
+            },
+            "gameModeTitle": {
+                tr: "Oyun Modu",
+                en: "Game Mode"
+            },
+            "gameLevelLabel": {
+                tr: "Oyun Seviyesi:",
+                en: "Game Level:"
+            },
+            "gameModeNote": {
+                tr: "Oyunu başlatmak ve seviye seçmek için bu paneli kullanın.",
+                en: "Use this panel to start the game and select the level."
+            },
+            "webcamControlsTitle": {
+                tr: "Webcam Kontrolleri",
+                en: "Webcam Controls"
+            },
+            "webcamNote": {
+                tr: "Görsel yardım için webcam'inizi açıp kapatabilirsiniz. Pencereyi sürükleyebilirsiniz.",
+                en: "You can open/close your webcam for visual aid. You can drag the window."
+            },
+            "showMajorScale": {
+                tr: "Sadece Majör Dizisini Göster (1. Pozisyon)",
+                en: "Show Major Scale Only (1st Position)"
+            },
+            "show1stPosBlues": {
+                tr: "Sadece Blues Dizisini Göster (1. Pozisyon)",
+                en: "Show Blues Scale Only (1st Position)"
+            },
+            "show2ndPosBlues": {
+                tr: "Sadece Blues Dizisini Göster (2. Pozisyon)",
+                en: "Show Blues Scale Only (2nd Position)"
+            },
+            "show3rdPosBlues": {
+                tr: "Sadece Blues Dizisini Göster (3. Pozisyon)",
+                en: "Show Blues Scale Only (3rd Position)"
+            },
+            "showHarmonicMinor": {
+                tr: "Sadece Harmonik Minör Dizisini Göster (4. Pozisyon)",
+                en: "Show Harmonic Minor Scale Only (4th Position)"
+            },
+            "showHicazScale": {
+                tr: "Sadece Hicaz Dizisini Göster (12. Pozisyon)",
+                en: "Show Hicaz Scale Only (12th Position)"
+            },
+            "showMinorScale": {
+                tr: "Sadece Minör Dizisini Göster (4. Pozisyon)",
+                en: "Show Minor Scale Only (4th Position)"
+            },
+             "jsonRecordingTitle": {
+                tr: "Nota Dizisi Kaydı (JSON)",
+                en: "Note Sequence Record (JSON)"
+            },
+            "startJsonRecordBtn": {
+                tr: "Kayıt Başlat",
+                en: "Start Rec"
+            },
+            "stopJsonRecordBtn": {
+                tr: "Kayıt Durdur",
+                en: "Stop Rec"
+            },
+            "exportJsonBtn": {
+                tr: "Kaydet (.json)",
+                en: "Save (.json)"
+            },
+            "importJsonBtn": {
+                tr: "Yükle (.json)",
+                en: "Load (.json)"
+            },
+            "playJsonBtn": {
+                tr: "Yükleneni Çal",
+                en: "Play Loaded"
+            },
+            "stopPlaybackBtn": {
+                 tr: "Çalmayı Durdur",
+                 en: "Stop Playback"
+            },
+             "soundTypeLabel": {
+                tr: "Ses Tipi:",
+                en: "Sound Type:"
+            },
+            "playbackSpeedLabel": {
+                tr: "Çalma Hızı:",
+                en: "Playback Speed:"
+            },
+            "soundHarmonica": { tr: "Harmonika", en: "Harmonica" },
+            "soundOrgan": { tr: "Organ", en: "Organ" },
+            "soundFlute": { tr: "Flüt", en: "Flute" },
+            "soundGuitar": { tr: "Gitar", en: "Guitar" },
+            "soundDistortedHarp": { tr: "Distortionlu Harp", en: "Distorted Harp" },
+            "soundSine": { tr: "Sine", en: "Sine" },
+            "soundSquare": { tr: "Kare", en: "Square" },
+            "soundTriangle": { tr: "Üçgen", en: "Triangle" },
+            "jsonRecordingNote": {
+                tr: "Notaları başlangıç zamanı ve süreleriyle kaydedin, kaydedin, yükleyin ve çalın.",
+                en: "Record, save, load, and play back notes with their start times and durations."
+            },
+            "recPrecisionLabel": {
+                tr: "Kayıt Hassasiyeti:",
+                en: "Recording Precision:"
+            },
+            "precisionNormal": {
+                tr: "Normal (90ms)",
+                en: "Normal (90ms)"
+            },
+            "precisionHigh": {
+                tr: "Yüksek (50ms)",
+                en: "High (50ms)"
+            },
+            "precisionMax": {
+                tr: "Maksimum (30ms)",
+                en: "Maximum (30ms)"
+            },
+            "statusJsonRecordingStarted": {
+                tr: "JSON kaydı başladı.",
+                en: "JSON recording started."
+            },
+            "statusJsonRecordingStopped": {
+                tr: "JSON kaydı durduruldu.",
+                en: "JSON recording stopped."
+            },
+            "statusJsonNoTabs": {
+                tr: "Kaydedilmiş JSON verisi yok.",
+                en: "No JSON data recorded."
+            },
+            "statusJsonExported": {
+                tr: "JSON verisi dışa aktarıldı.",
+                en: "JSON data exported."
+            },
+            "statusJsonNotLoaded": {
+                tr: "Çalınacak bir JSON dizisi yüklenmedi.",
+                en: "No JSON sequence is loaded to play."
+            },
+            "statusJsonPlaying": {
+                tr: "JSON dizisi çalınıyor...",
+                en: "Playing JSON sequence..."
+            },
+             "statusJsonPlaybackMuted": {
+                tr: "Çalma sırasında mikrofon duraklatıldı.",
+                en: "Microphone paused during playback."
+            },
+            "statusJsonPlayFinished": {
+                tr: "Dizi çalımı bitti.",
+                en: "Sequence playback finished."
+            },
+            "statusJsonPlaybackStopped": {
+                 tr: "Dizi çalımı durduruldu.",
+                 en: "Sequence playback stopped."
+            },
+            "statusJsonFileLoaded": {
+                tr: "JSON dosyası yüklendi. Çalmaya hazır.",
+                en: "JSON file loaded. Ready to play."
+            },
+            "statusJsonFileError": {
+                tr: "JSON dosyası okunamadı veya formatı bozuk.",
+                en: "Could not read JSON file or format is invalid."
+            },
+            "statusWebcamOpenError": {
+                tr: "Webcam video oynatılamadı. Konsolu kontrol edin.",
+                en: "Webcam video could not be played. Check console."
+            },
+            "statusWebcamStreamError": {
+                tr: "Webcam video akışı alınamadı.",
+                en: "Webcam video stream could not be obtained."
+            },
+            "statusWebcamInitError": {
+                tr: "Webcam açılamadı: {errorName}",
+                en: "Could not open webcam: {errorName}"
+            },
+            "statusWebcamPermissionDenied": {
+                tr: "Kamera izni reddedildi. Lütfen tarayıcı ayarlarından kamera iznini kontrol edin.",
+                en: "Camera permission denied. Please check camera permissions in browser settings."
+            },
+            "statusWebcamNotFound": {
+                tr: "Kamera bulunamadı. Lütfen kameranızın bağlı ve çalışır durumda olduğundan emin olun.",
+                en: "Camera not found. Please ensure your camera is connected and working."
+            },
+            "statusWebcamInUse": {
+                tr: "Kamera başka bir uygulama tarafından kullanılıyor veya bir donanım hatası oluştu.",
+                en: "Camera is in use by another application or a hardware error occurred."
+            },
+            "statusLickNotSetGameActive": {
+                tr: "Lick ayarlanamaz: Oyun modu aktif.",
+                en: "Cannot set lick: Game mode is active."
+            },
+            "statusLickCleared": {
+                tr: "Lick temizlendi.",
+                en: "Lick cleared."
+            },
+            "statusLickInvalid": {
+                tr: "Lick girdisi geçerli değil veya notalar filtreli.",
+                en: "Lick input is invalid or notes are filtered."
+            },
+            "statusLickSet": {
+                tr: "Lick ayarlandı ({count} adım). Başlamak için çalın.",
+                en: "Lick set ({count} steps). Play to start."
+            },
+            "statusLickTargetHidden": {
+                tr: "Hedef ({target}) filtreler nedeniyle görünür değil.",
+                en: "Target ({target}) is not visible due to filters."
+            },
+            "statusFileSelectError": {
+                tr: "Lütfen bir dosya seçin.",
+                en: "Please select a file."
+            },
+            "statusFileLoadSuccess": {
+                tr: "Lick dosyadan yüklendi ve uygulandı.",
+                en: "Lick loaded from file and applied."
+            },
+            "statusFileLoadError": {
+                tr: "Dosya yükleme hatası.",
+                en: "File loading error."
+            },
+            "statusRecordingStarted": {
+                tr: "TAB kaydı başladı.",
+                en: "TAB recording started."
+            },
+            "statusRecordingStopped": {
+                tr: "TAB kaydı durduruldu.",
+                en: "TAB recording stopped."
+            },
+            "statusNoTabsRecorded": {
+                tr: "Kaydedilen TAB bulunamadı!",
+                en: "No recorded TABs found!"
+            },
+            "statusTabsExported": {
+                tr: "TAB kayıtları dışa aktarıldı.",
+                en: "TAB recordings exported."
+            },
+            "statusGameStartAudioNeeded": {
+                tr: "Lütfen önce mikrofonu veya sekme sesini başlatın.",
+                en: "Please start microphone or tab audio first."
+            },
+            "statusGameNoActiveNotes": {
+                tr: "Oyun başlatılamadı: Yeterli aktif nota yok.",
+                en: "Game could not start: Not enough active notes."
+            },
+            "statusGameStarted": {
+                tr: "Oyun Başladı! Seviye {level}. Sıradaki: {note}",
+                en: "Game Started! Level {level}. Next: {note}"
+            },
+            "statusGameStopped": {
+                tr: "Oyun Durduruldu.",
+                en: "Game Stopped."
+            },
+            "statusLickModeStopped": {
+                tr: "Lick modu durduruldu/sıfırlandı.",
+                en: "Lick mode stopped/reset."
+            },
+            "statusGameCorrectNote": {
+                tr: "Doğru! Sıradaki: {note}",
+                en: "Correct! Next: {note}"
+            },
+            "statusGameComplete": {
+                tr: "Oyun tamamlandı! Harika iş çıkardınız!",
+                en: "Game complete! Great job!"
+            },
+            "statusGameWrongNote": {
+                tr: "Yanlış! Beklenen: {expected}, Çalınan: {played}",
+                en: "Wrong! Expected: {expected}, Played: {played}"
+            },
+            "statusGameNextNoteAfterSilence": {
+                tr: "Sıradaki: {note}",
+                en: "Next: {note}"
+            },
+            "statusLickChordPartPlayed": {
+                tr: "Akorun parçası çalındı: {playedNote}. Kalan: {remainingNotes}",
+                en: "Chord part played: {playedNote}. Remaining: {remainingNotes}"
+            },
+            "statusLickComplete": {
+                tr: "Lick tamamlandı! Harika!",
+                en: "Lick complete! Awesome!"
+            },
+            "statusMicStartingTabStopping": {
+                tr: "Mikrofon başlatılıyor, sekme sesi durduruluyor...",
+                en: "Starting microphone, stopping tab audio..."
+            },
+            "statusMicActiveGameOn": {
+                tr: "Mikrofon açık, oyun devam ediyor.",
+                en: "Microphone on, game continues."
+            },
+            "statusMicActive": {
+                tr: "Mikrofon açık.",
+                en: "Microphone on."
+            },
+            "statusMicError": {
+                tr: "Mikrofon başlatılamadı. {errorDetails}",
+                en: "Could not start microphone. {errorDetails}"
+            },
+            "statusMicStopped": {
+                tr: "Mikrofon durduruldu.",
+                en: "Microphone stopped."
+            },
+            "statusTabStartingMicStopping": {
+                tr: "Sekme sesi başlatılıyor, mikrofon durduruluyor...",
+                en: "Starting tab audio, stopping microphone..."
+            },
+            "statusTabSelectionPending": {
+                tr: "Sekme seçimi bekleniyor... Lütfen tarayıcı istemini kontrol edin.",
+                en: "Waiting for tab selection... Please check browser prompt."
+            },
+            "statusTabNoAudioTrack": {
+                tr: "Paylaşılan sekmede ses izi bulunamadı.",
+                en: "No audio track found in shared tab."
+            },
+            "statusTabCapturing": {
+                tr: "Sekme sesi yakalanıyor...",
+                en: "Capturing tab audio..."
+            },
+            "statusTabCaptureEnded": {
+                tr: "Sekme paylaşımı sonlandırıldı.",
+                en: "Tab sharing ended."
+            },
+            "statusTabCaptureError": {
+                tr: "Sekme sesi yakalanamadı. {errorDetails}",
+                en: "Could not capture tab audio. {errorDetails}"
+            },
+            "statusTabCaptureStopped": {
+                tr: "Sekme sesi durduruldu.",
+                en: "Tab audio stopped."
+            },
+            "statusPitchDetectionError": {
+                tr: "Pitch algılama hatası.",
+                en: "Pitch detection error."
+            },
+            "statusFilterChangedLickReset": {
+                tr: "Filtre değişti, Lick sıfırlandı.",
+                en: "Filter changed, Lick reset."
+            },
+            "statusModeFilterChangedLickReset": {
+                tr: "Mod filtresi değişti, Lick sıfırlandı.",
+                en: "Mode filter changed, Lick reset."
+            },
+            "statusTransposeChangedGameStop": {
+                tr: "Ton değişti, oyun durduruldu.",
+                en: "Key changed, game stopped."
+            },
+            "statusTransposeChangedLickReset": {
+                tr: "Ton değişti, Lick sıfırlandı.",
+                en: "Key changed, Lick reset."
+            },
+            "statusGameLevelSet": {
+                tr: "Oyun seviyesi {level} olarak ayarlandı.",
+                en: "Game level set to {level}."
+            },
+            "statusPitchHiddenByFilter": {
+                tr: "Oyun durduruldu: Beklenen nota ({note}) filtreler nedeniyle gizlendi.",
+                en: "Game stopped: Expected note ({note}) is hidden by filters."
+            }
+        };
+        let currentLanguage = localStorage.getItem('appLanguage_MizikApp') || 'tr';
+        const languageToggleButton = document.getElementById('language-toggle-btn');
+
+        function translateText(key, params = {}) {
+            const translationSet = translations[key];
+            if (translationSet && translationSet[currentLanguage]) {
+                let text = translationSet[currentLanguage];
+                for (const paramKey in params) {
+                    text = text.replace(`{${paramKey}}`, params[paramKey])
+                }
+                return text
+            }
+            console.warn(`Translation key not found: ${key} for language ${currentLanguage}`);
+            if (translationSet && translationSet[currentLanguage === 'tr' ? 'en' : 'tr']) {
+                let fallbackText = translationSet[currentLanguage === 'tr' ? 'en' : 'tr'];
+                for (const paramKey in params) {
+                    fallbackText = fallbackText.replace(`{${paramKey}}`, params[paramKey])
+                }
+                return fallbackText
+            }
+            return key
+        }
+
+        function applyTranslations() {
+            document.documentElement.lang = currentLanguage;
+            document.querySelectorAll('[data-translate-key]').forEach(element => {
+                const key = element.getAttribute('data-translate-key');
+                const targetProperty = element.getAttribute('data-translate-target');
+                const translatedText = translateText(key);
+                if (targetProperty === 'placeholder') {
+                    element.placeholder = translatedText
+                } else {
+                    if (element.tagName === 'SPAN' && element.parentElement.tagName === 'LABEL' && element.parentElement.childNodes.length > 1 && element.parentElement.childNodes[0].nodeType === Node.ELEMENT_NODE && element.parentElement.childNodes[0].tagName === 'INPUT') {
+                        element.innerText = translatedText
+                    } else if (element.tagName !== 'SPAN' || element.parentElement.tagName !== 'LABEL') {
+                        element.innerText = translatedText
+                    }
+                }
+            });
+            languageToggleButton.innerText = currentLanguage === 'tr' ? translateText('languageToggleToEn') : translateText('languageToggleToTr');
+            const webcamBtn = document.getElementById('webcam-toggle-button');
+            if (webcamBtn) {
+                webcamBtn.innerText = webcamBtn.classList.contains('active') ? translateText('webcamCloseBtn') : translateText('webcamOpenBtn')
+            }
+            const micBtn = document.getElementById('mic-start-btn');
+            if (micBtn) {
+                micBtn.innerText = typeof isListening !== 'undefined' && isListening ? translateText('micStopBtn') : translateText('micStartBtn')
+            }
+            const tabAudioBtn = document.getElementById('tab-audio-start-btn');
+            if (tabAudioBtn) {
+                tabAudioBtn.innerText = typeof isListening !== 'undefined' && isListening && audioStream && audioStream.getVideoTracks().length === 0 ? translateText('tabAudioStopBtn') : translateText('tabAudioStartBtn')
+            }
+            const gameBtn = document.getElementById('start-game-btn');
+            if (gameBtn) {
+                gameBtn.innerText = typeof isGameMode !== 'undefined' && isGameMode ? translateText('stopGameBtn') : translateText('startGameBtn')
+            }
+            if (typeof renderGrid === 'function') renderGrid();
+            if (typeof renderChromaticPiano === 'function') renderChromaticPiano();
+            if (typeof updateCircleLabels === 'function' && typeof document !== 'undefined' && document.getElementById('transpose')) {
+                updateCircleLabels(document.getElementById('transpose').value)
+            }
+            if (typeof applyAllFiltersAndUpdateGame === 'function') {
+                applyAllFiltersAndUpdateGame()
+            }
+            if (typeof gameStatusDiv !== 'undefined' && gameStatusDiv.dataset.translateKey) {
+                const currentStatusKey = gameStatusDiv.dataset.translateKey;
+                const currentStatusParams = JSON.parse(gameStatusDiv.dataset.translateParams || '{}');
+                gameStatusDiv.innerText = translateText(currentStatusKey, currentStatusParams)
+            }
+            const freqDisp = document.getElementById('freq-display');
+            if (freqDisp) {
+                const currentText = freqDisp.innerText;
+                if (currentText.includes(': -- Hz')) {
+                    freqDisp.innerHTML = `<span data-translate-key="freqLabel">${translateText('freqLabel')}</span>: ${translateText('noFreqLabel')}`
+                }
+            }
+        }
+        if (languageToggleButton) {
+            languageToggleButton.addEventListener('click', () => {
+                currentLanguage = currentLanguage === 'tr' ? 'en' : 'tr';
+                localStorage.setItem('appLanguage_MizikApp', currentLanguage);
+                applyTranslations();
+                if (typeof isGameMode !== 'undefined' && isGameMode && typeof gameSequence !== 'undefined' && gameSequence.length > 0 && typeof currentSequenceIndex !== 'undefined' && currentSequenceIndex < gameSequence.length) {
+                    updateGameStatus('statusGameStarted', {
+                        level: gameLevel,
+                        note: displayEnharmonic(gameSequence[currentSequenceIndex])
+                    });
+                } else if (typeof lickNotes !== 'undefined' && lickNotes.length > 0 && typeof currentLickIndex !== 'undefined' && currentLickIndex < lickNotes.length) {
+                    updateGameStatus('statusLickSet', {
+                        count: lickNotes.length
+                    });
+                    showCurrentLickTarget();
+                }
+            });
+        }
+        
+        // --- Webcam ve Önizleme Penceresi Kontrolleri (Değişiklik Yok) ---
+        const webcamToggleButton = document.getElementById('webcam-toggle-button');
+        const webcamWindowElement = document.getElementById('webcam-window');
+        const webcamVideoElement = document.getElementById('webcam-video');
+        const resizeHandle = document.getElementById('resize-handle');
+        let webcamStream = null;
+
+        let isDragging = false;
+        let isResizing = false;
+        let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+        let initialWidth, initialHeight;
+
+        async function startWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                });
+                webcamStream = stream;
+                webcamVideoElement.srcObject = stream;
+                webcamVideoElement.muted = false; 
+                await webcamVideoElement.play();
+                webcamWindowElement.style.display = 'block';
+                webcamToggleButton.textContent = translateText('webcamCloseBtn');
+                webcamToggleButton.classList.add('active');
+            } catch (err) {
+                console.error("Webcam başlatma hatası:", err);
+                updateGameStatus("statusWebcamInitError", { errorName: err.name });
+                stopWebcam();
+            }
+        }
+
+        function stopWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+            }
+            webcamVideoElement.srcObject = null;
+            webcamWindowElement.style.display = 'none';
+            webcamStream = null;
+            if (webcamToggleButton) {
+                webcamToggleButton.textContent = translateText('webcamOpenBtn');
+                webcamToggleButton.classList.remove('active');
+            }
+        }
+
+        function dragStart(e) {
+            if (e.target === resizeHandle) return;
+            isDragging = true;
+            
+            if (e.type === "touchstart") {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+            webcamWindowElement.classList.add("dragging");
+        }
+        
+        function resizeStart(e) {
+            e.preventDefault();
+            isResizing = true;
+            initialWidth = webcamWindowElement.offsetWidth;
+            initialHeight = webcamWindowElement.offsetHeight;
+             if (e.type === "touchstart") {
+                initialX = e.touches[0].clientX;
+                initialY = e.touches[0].clientY;
+            } else {
+                initialX = e.clientX;
+                initialY = e.clientY;
+            }
+        }
+
+        function handleMove(e) {
+            let clientX, clientY;
+            if(e.type === "touchmove") {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            if (isDragging) {
+                currentX = clientX - initialX;
+                currentY = clientY - initialY;
+                xOffset = currentX;
+                yOffset = currentY;
+                setTranslate(currentX, currentY, webcamWindowElement);
+            } else if (isResizing) {
+                const dx = clientX - initialX;
+                const dy = clientY - initialY;
+                
+                const newWidth = initialWidth + dx;
+                const newHeight = initialHeight + dy;
+
+                const minWidth = parseInt(getComputedStyle(webcamWindowElement).minWidth);
+                const minHeight = parseInt(getComputedStyle(webcamWindowElement).minHeight);
+
+                if (newWidth > minWidth) {
+                    webcamWindowElement.style.width = newWidth + 'px';
+                }
+                if (newHeight > minHeight) {
+                    webcamWindowElement.style.height = newHeight + 'px';
+                }
+            }
+        }
+
+        function handleEnd() {
+            isDragging = false;
+            isResizing = false;
+            webcamWindowElement.classList.remove("dragging");
+        }
+
+        function setTranslate(xPos, yPos, el) {
+             const rect = el.getBoundingClientRect();
+             let targetX = Math.max(0, xPos);
+             let targetY = Math.max(0, yPos);
+             targetX = Math.min(window.innerWidth - rect.width, targetX);
+             targetY = Math.min(window.innerHeight - rect.height, targetY);
+             el.style.left = targetX + "px";
+             el.style.top = yPos + "px";
+             el.style.bottom = 'auto';
+             el.style.right = 'auto';
+        }
+
+        webcamToggleButton.addEventListener('click', () => {
+            if (webcamStream) {
+                stopWebcam();
+            } else {
+                startWebcam();
+            }
+        });
+
+        webcamWindowElement.addEventListener("mousedown", dragStart);
+        resizeHandle.addEventListener("mousedown", resizeStart);
+        document.addEventListener("mousemove", handleMove);
+        document.addEventListener("mouseup", handleEnd);
+        
+        webcamWindowElement.addEventListener("touchstart", dragStart, { passive: false });
+        resizeHandle.addEventListener("touchstart", resizeStart, { passive: false });
+        document.addEventListener("touchmove", handleMove, { passive: true });
+        document.addEventListener("touchend", handleEnd);
+
+        window.addEventListener('beforeunload', () => {
+            stopWebcam();
+        });
+
+
+        // --- MizikApp Ana Mantığı ---
+        const semitones = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const grid = document.getElementById('harmonica-grid');
+        const freqDisplay = document.getElementById('freq-display');
+        let transposeOffset = 0;
+        let lickNotes = [];
+        let currentLickIndex = 0;
+        let activeHarmonicaNotesCache = [];
+        const layout = [
+            ['', '', '', '', '', '', '', '', '', 'A#6'],
+            ['D#4', '', '', 'D#5', 'F#5', 'A#5', '', 'D#6', 'F#6', 'B6'],
+            ['C4', 'E4', 'G4', 'C5', 'E5', 'G5', 'C6', 'E6', 'G6', 'C7'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+            ['D4', 'G4', 'B4', 'D5', 'F5', 'A5', 'B5', 'D6', 'F6', 'A6'],
+            ['C#4', 'F#4', 'A#4', 'C#5', '', 'G#5', 'C#6', '', 'G#6', 'C#7'],
+            ['', 'F4', 'A4', '', '', '', '', '', '', ''],
+            ['', '', 'G#4', '', '', '', '', '', '', '']
+        ];
+        const noteTypes = {
+            'C4': 'blow', 'E4': 'blow', 'G4': 'blow', 'C5': 'blow', 'E5': 'blow', 'G5': 'blow', 'C6': 'blow', 'E6': 'blow', 'G6': 'blow', 'C7': 'blow',
+            'D4': 'draw', 'G4': 'draw', 'B4': 'draw', 'D5': 'draw', 'F5': 'draw', 'A5': 'draw', 'B5': 'draw', 'D6': 'draw', 'F6': 'draw', 'A6': 'draw',
+            'C#4': 'draw-bend', 'F#4': 'draw-bend', 'A#4': 'draw-bend', 'C#5': 'draw-bend', 'G#5': 'draw-bend', 'F4': 'draw-bend', 'A4': 'draw-bend', 'G#4': 'draw-bend',
+            'B6': 'blow-bend', 'F#6': 'blow-bend', 'D#6': 'blow-bend', 'A#6': 'blow-bend',
+            'D#4': 'overblow', 'D#5': 'overblow', 'F#5': 'overblow', 'A#5': 'overblow',
+            'C#6': 'overdraw', 'G#6': 'overdraw', 'C#7': 'overdraw'
+        };
+        const cHarmonicaNotes = {
+            '+1': 'C4', '+2': 'E4', '+3': 'G4', '+4': 'C5', '+5': 'E5', '+6': 'G5', '+7': 'C6', '+8': 'E6', '+9': 'G6', '+10': 'C7',
+            '1': 'D4', '2': 'G4', '3': 'B4', '4': 'D5', '5': 'F5', '6': 'A5', '7': 'B5', '8': 'D6', '9': 'F6', '10': 'A6',
+            '1\'': 'C#4', '2\'': 'F#4', '2\'\'': 'F4', '3\'': 'A#4', '3\'\'': 'A4', '3\'\'\'': 'G#4', '4\'': 'C#5', '6\'': 'G#5',
+            '+7\'': 'B5', '+8\'': 'D#6', '+9\'': 'F#6', '+10\'': 'B6', '+10\'\'': 'A#6',
+            '+1o': 'D#4', '+4o': 'D#5', '+5o': 'F#5', '+6o': 'A#5',
+            '7o': 'C#6', '9o': 'G#6', '10o': 'C#7'
+        };
+
+        // --- Ses İşleme Değişkenleri ---
+        let isGameMode = false;
+        let gameLevel = 1;
+        let gameSequence = [];
+        let currentSequenceIndex = 0;
+        let isRecording = false;
+        let recordedTabs = [];
+        const gameStatusDiv = document.getElementById('game-status');
+        const gameLevelSelect = document.getElementById('game-level');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const startRecordBtn = document.getElementById('startRecordBtn');
+        const stopRecordBtn = document.getElementById('stopRecordBtn');
+
+        let recordingDebounceTimer = null;
+        let lastNoteForDebounce = null;
+        const RECORDING_DEBOUNCE_MS = 70;
+
+        const minSustainedFrames = 2; // Increased for pYIN stability
+        let consecutivePitchedFrames = 0;
+        let lastProcessedNoteForStep = null;
+
+        const sequenceLengths = { 1: 4, 2: 6, 3: 8, 4: 10, 5: 12 };
+
+        let audioContext = null;
+        let audioStream = null;
+        let analyser = null;
+        let audioBuffer = null;
+        let isListening = false;
+        let rafId = null;
+        const MIN_DECIBELS = -55.0; // Adjusted threshold
+        
+        // --- YENİ: p-YIN Worker Değişkenleri ---
+        let pitchWorker = null;
+        const P_YIN_PROBABILITY_THRESHOLD = 0.70; // Confidence threshold
+
+        
+        // --- Audio Engine for Playback and Interaction (Değişiklik Yok) ---
+        const audioEngine = {
+            audioCtx: null,
+            playingOscillators: {},
+
+            init() {
+                if (!this.audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+                    try {
+                        this.audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.error("Web Audio API is not supported in this browser");
+                    }
+                }
+                if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+            },
+            
+            _makeDistortionCurve(amount) {
+                let k = typeof amount === 'number' ? amount : 50,
+                    n_samples = 44100,
+                    curve = new Float32Array(n_samples),
+                    deg = Math.PI / 180,
+                    x;
+                for (let i = 0; i < n_samples; ++i) {
+                    x = i * 2 / n_samples - 1;
+                    curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+                }
+                return curve;
+            },
+
+            _createBasicSynth(freq, type) {
+                const osc = this.audioCtx.createOscillator();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                return {
+                    nodes: [osc],
+                    mainNode: osc,
+                    attack: 0.01,
+                    decay: 0.1,
+                    sustain: 0.8,
+                    release: 0.2
+                };
+            },
+            
+            _createOrgan(freq) {
+                const osc1 = this.audioCtx.createOscillator();
+                osc1.type = 'square';
+                osc1.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+
+                const osc2 = this.audioCtx.createOscillator();
+                osc2.type = 'square';
+                osc2.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                osc2.detune.setValueAtTime(4, this.audioCtx.currentTime);
+
+                const osc2Gain = this.audioCtx.createGain();
+                osc2Gain.gain.value = 0.7;
+                osc2.connect(osc2Gain);
+
+                return { nodes: [osc1, osc2], mainNode: [osc1, osc2Gain], attack: 0.01, decay: 0, sustain: 1, release: 0.1 };
+            },
+
+            _createHarmonica(freq) {
+                 const osc1 = this.audioCtx.createOscillator();
+                osc1.type = 'sawtooth';
+                osc1.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+
+                const osc2 = this.audioCtx.createOscillator();
+                osc2.type = 'sawtooth';
+                osc2.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                osc2.detune.setValueAtTime(9, this.audioCtx.currentTime);
+                
+                const osc2Gain = this.audioCtx.createGain();
+                osc2Gain.gain.value = 0.7;
+                osc2.connect(osc2Gain);
+
+                return { nodes: [osc1, osc2], mainNode: [osc1, osc2Gain], attack: 0.02, decay: 0.1, sustain: 0.9, release: 0.2 };
+            },
+            
+            _createDistortedHarp(freq) {
+                const instrument = this._createHarmonica(freq);
+
+                const distortion = this.audioCtx.createWaveShaper();
+                distortion.curve = this._makeDistortionCurve(120);
+                distortion.oversample = '4x';
+                
+                const cabinetFilter = this.audioCtx.createBiquadFilter();
+                cabinetFilter.type = 'lowpass';
+                cabinetFilter.frequency.setValueAtTime(2500, this.audioCtx.currentTime);
+
+                instrument.mainNode.forEach(node => node.connect(distortion));
+                distortion.connect(cabinetFilter);
+
+                instrument.mainNode = cabinetFilter; 
+                instrument.nodes.push(distortion, cabinetFilter);
+                return instrument;
+            },
+            
+           _createFlute(freq) {
+                this.init();
+                const now = this.audioCtx.currentTime;
+                const osc1 = this.audioCtx.createOscillator();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(freq, now);
+                const osc2 = this.audioCtx.createOscillator();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(freq * 2, now);
+                const osc2Gain = this.audioCtx.createGain();
+                osc2Gain.gain.value = 0.2;
+                osc2.connect(osc2Gain);
+                const bufferSize = this.audioCtx.sampleRate * 5; 
+                const noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                const noiseNode = this.audioCtx.createBufferSource();
+                noiseNode.buffer = noiseBuffer;
+                noiseNode.loop = false;
+                const noiseFilter = this.audioCtx.createBiquadFilter();
+                noiseFilter.type = 'bandpass';
+                noiseFilter.frequency.value = freq * 1.5;
+                noiseFilter.Q.value = 0.8;
+                const noiseGain = this.audioCtx.createGain();
+                noiseGain.gain.setValueAtTime(0, now);
+                noiseGain.gain.linearRampToValueAtTime(0.3, now + 0.01); 
+                noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1); 
+                
+                noiseNode.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                
+                noiseNode.start(now);
+                noiseNode.stop(now + 5); 
+                
+                return {
+                    nodes: [osc1, osc2, noiseNode], 
+                    mainNode: [osc1, osc2Gain, noiseGain], 
+                    attack: 0.15,
+                    decay: 0.2,
+                    sustain: 0.7,
+                    release: 0.4
+                };
+            },
+            _createGuitar(freq) {
+                const osc = this.audioCtx.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+
+                const filter = this.audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.Q.value = 1;
+
+                filter.frequency.setValueAtTime(freq * 3, this.audioCtx.currentTime); 
+                filter.frequency.exponentialRampToValueAtTime(freq * 0.5, this.audioCtx.currentTime + 0.3);
+
+                osc.connect(filter);
+                
+                return {
+                    nodes: [osc, filter], // filter'ı da nodes'a ekliyoruz
+                    mainNode: filter,
+                    attack: 0.01,
+                    decay: 1.5,
+                    sustain: 0.0,
+                    release: 1.5
+                };
+            },
+            startSound(note, initialFreq = null, soundType = 'harmonica') {
+                this.init();
+                if (!this.audioCtx || this.playingOscillators[note]) return;
+
+                const freq = initialFreq || noteToFreq(note);
+                if (freq <= 0) return;
+
+                const now = this.audioCtx.currentTime;
+                const mainGain = this.audioCtx.createGain();
+                
+                let instrument;
+                switch(soundType) {
+                    case 'organ': instrument = this._createOrgan(freq); break;
+                    case 'harmonica': instrument = this._createHarmonica(freq); break;
+                    case 'distorted-harp': instrument = this._createDistortedHarp(freq); break;
+                    case 'flute': instrument = this._createFlute(freq); break;
+                    case 'guitar': instrument = this._createGuitar(freq); break;
+                    case 'sine': instrument = this._createBasicSynth(freq, 'sine'); break;
+                    case 'square': instrument = this._createBasicSynth(freq, 'square'); break;
+                    case 'triangle': instrument = this._createBasicSynth(freq, 'triangle'); break;
+                    default: return;
+                }
+                
+                // mainNode'un tek bir node mi yoksa dizi mi olduğunu kontrol et
+                if (Array.isArray(instrument.mainNode)) {
+                     instrument.mainNode.forEach(node => node.connect(mainGain));
+                } else {
+                     instrument.mainNode.connect(mainGain);
+                }
+                mainGain.connect(this.audioCtx.destination);
+                
+                mainGain.gain.setValueAtTime(0, now);
+                mainGain.gain.linearRampToValueAtTime(1.0, now + instrument.attack);
+                mainGain.gain.setTargetAtTime(instrument.sustain, now + instrument.attack, instrument.decay + 0.001);
+
+                instrument.nodes.forEach(node => {
+                    if (node instanceof OscillatorNode || node instanceof AudioBufferSourceNode) {
+                        if (typeof node.start === 'function') {
+                           // Sadece henüz başlamamışsa başlat
+                           try { node.start(now); } catch(e) { /* zaten başlamış olabilir, sorun değil */ }
+                        }
+                    }
+                });
+                
+                this.playingOscillators[note] = {
+                    nodes: instrument.nodes,
+                    mainGain: mainGain,
+                    release: instrument.release,
+                };
+            },
+            updatePitch(note, freq) {
+                if (!this.audioCtx || !this.playingOscillators[note]) return;
+                
+                const { nodes } = this.playingOscillators[note];
+                const now = this.audioCtx.currentTime;
+
+                nodes.forEach(node => {
+                    if (node instanceof OscillatorNode) {
+                        node.frequency.linearRampToValueAtTime(freq, now + 0.02);
+                    }
+                });
+            },
+            stopSound(note) {
+                if (!this.audioCtx || !this.playingOscillators[note]) return;
+                const sound = this.playingOscillators[note];
+                const now = this.audioCtx.currentTime;
+
+                sound.mainGain.gain.cancelScheduledValues(now);
+                sound.mainGain.gain.setTargetAtTime(0, now, sound.release / 4); 
+
+                const stopTime = now + sound.release * 2;
+                sound.nodes.forEach(node => {
+                    if (node.stop) {
+                        try { node.stop(stopTime); } catch(e) {/* Hata yönetimi */}
+                    }
+                });
+
+                delete this.playingOscillators[note];
+            },
+            
+            stopAllSounds() {
+                Object.keys(this.playingOscillators).forEach(note => {
+                    this.stopSound(note);
+                });
+            }
+        };
+
+        function noteToFreq(note) {
+            const A4 = 440;
+            const noteBase = note.replace(/[0-9]/g, '');
+            let baseName = noteBase.replace(/[♭#]/g, '');
+            let accidental = noteBase.replace(baseName, '');
+            let noteIndex = semitones.indexOf(baseName);
+            if (noteIndex === -1) {
+                const enharmonicMap = {
+                    'A♭': 'G#', 'B♭': 'A#', 'D♭': 'C#', 'E♭': 'D#', 'G♭': 'F#'
+                };
+                const sharpEquivalent = enharmonicMap[baseName + accidental] || enharmonicMap[baseName];
+                if (sharpEquivalent) {
+                    baseName = sharpEquivalent;
+                    accidental = '';
+                    noteIndex = semitones.indexOf(baseName);
+                }
+            }
+            if (noteIndex === -1) return 0;
+            if (accidental === '#') noteIndex = (noteIndex + 1) % 12;
+            else if (accidental === '♭') noteIndex = (noteIndex - 1 + 12) % 12;
+            const octave = parseInt(note.replace(/[^0-9]/g, ''));
+            if (isNaN(octave)) return 0;
+            const n = noteIndex + (octave - 4) * 12 - semitones.indexOf('A');
+            return A4 * Math.pow(2, n / 12);
+        }
+
+        function transposeNote(note, offset) {
+            if (!note || !note.match(/[A-G]#?♭?\d+/)) {
+                if (!isNaN(note)) return note;
+                return ''
+            }
+            const base = note.replace(/[0-9]/g, '');
+            const octaveMatch = note.match(/\d+/);
+            const octave = octaveMatch ? parseInt(octaveMatch[0]) : 4;
+            let idx = semitones.indexOf(base.replace(/[#♭]/g, ''));
+            if (idx === -1) {
+                console.warn(`transposeNote: Semitone index not found for base note: ${base}`);
+                return note
+            }
+            if (base.includes('#')) idx++;
+            else if (base.includes('♭')) idx--;
+            let totalSemitonesAbs = idx + octave * 12;
+            totalSemitonesAbs += offset;
+            const newOctave = Math.floor(totalSemitonesAbs / 12);
+            const newIndex = (totalSemitonesAbs % 12 + 12) % 12;
+            return semitones[newIndex] + newOctave;
+        }
+
+        function displayEnharmonic(note) {
+            if (!note || typeof note !== 'string' || !note.match(/[A-G]/)) return note;
+            const base = note.replace(/[0-9]/g, '');
+            const octave = note.replace(/[^0-9]/g, '');
+            const enharmonics = {
+                'C#': 'C#', 'D#': 'E♭', 'F#': 'F#', 'G#': 'A♭', 'A#': 'B♭'
+            };
+            return (enharmonics[base] || base) + octave;
+        }
+
+        function formatStepForDisplay(step) {
+            if (Array.isArray(step)) {
+                return step.map(n => displayEnharmonic(n)).join('/')
+            }
+            return displayEnharmonic(step);
+        }
+
+        function addNoteInteraction(element) {
+            const applyHighlight = () => {
+                const note = element.dataset.note;
+                if (!note) return;
+                document.querySelectorAll(`[data-note='${note}']`).forEach(el => {
+                    el.classList.add('manual-play-highlight');
+                });
+            };
+
+            const removeHighlight = () => {
+                const note = element.dataset.note;
+                if (!note) return;
+                document.querySelectorAll(`[data-note='${note}']`).forEach(el => {
+                    el.classList.remove('manual-play-highlight');
+                });
+            };
+
+            element.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                const note = element.dataset.note;
+                const soundType = document.getElementById('sound-type').value;
+                if (note) {
+                    audioEngine.startSound(note, null, soundType);
+                    applyHighlight();
+                }
+            });
+
+            element.addEventListener('mouseup', () => {
+                const note = element.dataset.note;
+                if (note) {
+                    audioEngine.stopSound(note);
+                    removeHighlight();
+                }
+            });
+
+            element.addEventListener('mouseleave', () => {
+                const note = element.dataset.note;
+                if (note && audioEngine.playingOscillators[note]) { // Check if sound is actually playing
+                    audioEngine.stopSound(note);
+                    removeHighlight();
+                }
+            });
+
+            element.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const note = element.dataset.note;
+                const soundType = document.getElementById('sound-type').value;
+                if (note) {
+                    audioEngine.startSound(note, null, soundType);
+                    applyHighlight();
+                }
+            }, { passive: false });
+
+            element.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const note = element.dataset.note;
+                if (note) {
+                    audioEngine.stopSound(note);
+                    removeHighlight();
+                }
+            });
+        }
+        
+        // --- Diğer Fonksiyonlar (Değişiklik Yok)... ---
+        function renderGrid() {
+            grid.innerHTML = '';
+            layout.forEach(row => {
+                row.forEach(cellNoteOrNumber => {
+                    const div = document.createElement('div');
+                    div.className = 'cell';
+                    if (!cellNoteOrNumber) {
+                        div.classList.add('empty');
+                    } else if (!isNaN(cellNoteOrNumber)) {
+                        div.innerText = cellNoteOrNumber;
+                        div.classList.add('number');
+                    } else {
+                        const cHarmonicaNote = cellNoteOrNumber;
+                        const transposedNote = transposeNote(cHarmonicaNote, transposeOffset);
+                        div.setAttribute('data-note', transposedNote);
+                        div.innerText = displayEnharmonic(transposedNote);
+                        const typeClass = noteTypes[cHarmonicaNote];
+                        if (typeClass) div.classList.add(typeClass);
+                        const indicator = document.createElement('div');
+                        indicator.className = 'indicator';
+                        div.appendChild(indicator);
+                        addNoteInteraction(div); 
+                    }
+                    grid.appendChild(div);
+                });
+            });
+            applyAllFiltersAndUpdateGame();
+        }
+
+        function renderChromaticPiano() {
+            const piano = document.getElementById("chromatic-piano");
+            piano.innerHTML = '';
+            const selectedTransposeNote = document.getElementById('transpose').value;
+            let currentNoteName = selectedTransposeNote.replace(/[0-9]/g, '');
+            let currentOctave = parseInt(selectedTransposeNote.replace(/[^0-9]/g, ''));
+            let currentSemitoneIndex = semitones.indexOf(currentNoteName);
+            
+            const totalKeysToRender = 38;
+            let whiteKeyCounter = 0;
+            
+            const isMobile = window.innerWidth <= 480;
+            const isTablet = window.innerWidth <= 768;
+            const effectiveWhiteKeyWidth = isMobile ? 30 : (isTablet ? 30 : 40);
+            const effectiveBlackKeyWidth = isMobile ? 24 : (isTablet ? 24 : -5);
+            
+            for (let i = 0; i < totalKeysToRender; i++) {
+                const fullNote = semitones[currentSemitoneIndex] + currentOctave;
+                const key = document.createElement('div');
+                key.setAttribute('data-note', fullNote);
+                key.innerText = displayEnharmonic(fullNote);
+                addNoteInteraction(key);
+                
+                const isWhiteKey = !semitones[currentSemitoneIndex].includes('#');
+                
+                if (isWhiteKey) {
+                    key.className = 'white-key';
+                    piano.appendChild(key);
+                    whiteKeyCounter++;
+                } else {
+                    key.className = 'black-key';
+                    if (whiteKeyCounter > 0) {
+                        const leftPosition = (whiteKeyCounter * effectiveWhiteKeyWidth) - 
+                                             (effectiveWhiteKeyWidth / 2 ) - 
+                                             (effectiveBlackKeyWidth  );
+                        key.style.left = `${leftPosition}px`;
+                    }
+                    piano.appendChild(key);
+                }
+                
+                currentSemitoneIndex++;
+                if (currentSemitoneIndex >= semitones.length) {
+                    currentSemitoneIndex = 0;
+                    currentOctave++;
+                }
+            }
+            
+            const actualWhiteKeysRendered = piano.querySelectorAll('.white-key').length;
+            piano.style.width = `${actualWhiteKeysRendered * effectiveWhiteKeyWidth + 20}px`;
+        }
+        function updateVisibilityForTypeFilters() {
+            document.querySelectorAll('.cell[data-note]').forEach(cell => {
+                if (cell.classList.contains('number') || cell.classList.contains('empty')) return;
+                let isHiddenByType = false;
+                ['overblow', 'overdraw', 'blow-bend', 'draw-bend'].forEach(typeClass => {
+                    const cb = document.querySelector(`input.filter[data-class="${typeClass}"]`);
+                    if (cell.classList.contains(typeClass) && cb && !cb.checked) {
+                        isHiddenByType = true
+                    }
+                });
+                cell.classList.toggle('inactive', isHiddenByType);
+            });
+        }
+        function updateModeFilterAndFinalizeVisibility() {
+            const major = document.getElementById('major-mode').checked;
+            const blues1 = document.getElementById('1-blues-mode').checked;
+            const blues2 = document.getElementById('blues-mode').checked;
+            const blues3 = document.getElementById('3-blues-mode').checked;
+            const hminor = document.getElementById('h-minor-mode').checked;
+            const hicaz = document.getElementById('hicaz-mode').checked;
+            const minorNatural = document.getElementById('minor-mode').checked;
+            const selectedKey = document.getElementById('transpose').value;
+            const rootNoteName = selectedKey.replace(/[0-9]/g, '');
+            const rootOctave = parseInt(selectedKey.replace(/[^0-9]/g, ''));
+            let harmonicaRootSemitone = semitones.indexOf(rootNoteName);
+            if (harmonicaRootSemitone === -1) return;
+            let scaleIntervals = null;
+            let positionOffsetFromRoot = 0;
+            if (major) {
+                scaleIntervals = [0, 2, 4, 5, 7, 9, 11];
+                positionOffsetFromRoot = 0;
+            } else if (blues1) {
+                scaleIntervals = [0, 3, 5, 6, 7, 10];
+                positionOffsetFromRoot = 0;
+            } else if (blues2) {
+                scaleIntervals = [0, 3, 5, 6, 7, 10];
+                positionOffsetFromRoot = 7;
+            } else if (blues3) {
+                scaleIntervals = [0, 3, 5, 6, 7, 10];
+                positionOffsetFromRoot = 2;
+            } else if (hminor) {
+                scaleIntervals = [0, 2, 3, 5, 7, 8, 11];
+                positionOffsetFromRoot = 9;
+            } else if (hicaz) {
+                scaleIntervals = [0, 1, 2, 3, 4, 5, 7, 8, 11];
+                positionOffsetFromRoot = 5;
+            } else if (minorNatural) {
+                scaleIntervals = [0, 2, 3, 5, 7, 8, 10];
+                positionOffsetFromRoot = 9;
+            }
+            let allowedNotesInScale = null;
+            if (scaleIntervals) {
+                allowedNotesInScale = new Set();
+                const scaleRootBaseSemitone = (harmonicaRootSemitone + positionOffsetFromRoot) % 12;
+                for (let oct = rootOctave - 2; oct <= rootOctave + 4; oct++) {
+                    scaleIntervals.forEach(interval => {
+                        const noteSemitoneInOctave = (scaleRootBaseSemitone + interval) % 12;
+                        allowedNotesInScale.add(semitones[noteSemitoneInOctave] + oct);
+                    });
+                }
+            }
+            document.querySelectorAll('.cell[data-note]').forEach(cell => {
+                if (cell.classList.contains('number') || cell.classList.contains('empty')) return;
+                const noteOnCell = cell.getAttribute('data-note');
+                let isInScale = true;
+                if (allowedNotesInScale) {
+                    isInScale = allowedNotesInScale.has(noteOnCell)
+                }
+                const typeFilteredOut = cell.classList.contains('inactive');
+                const modeFilteredOut = allowedNotesInScale && !isInScale;
+                const isFinallyInactive = typeFilteredOut || modeFilteredOut;
+                cell.classList.toggle('inactive', isFinallyInactive);
+                if (cell.childNodes[0] && cell.childNodes[0].nodeType === Node.TEXT_NODE) {
+                    cell.childNodes[0].nodeValue = isFinallyInactive ? '\u200B' : displayEnharmonic(noteOnCell);
+                } else if (!isFinallyInactive) {
+                    cell.innerText = displayEnharmonic(noteOnCell);
+                    if (!cell.querySelector('.indicator')) {
+                        const indicator = document.createElement('div');
+                        indicator.className = 'indicator';
+                        cell.appendChild(indicator);
+                    }
+                } else {
+                    if (cell.childNodes[0] && cell.childNodes[0].nodeType === Node.TEXT_NODE) {
+                        cell.childNodes[0].nodeValue = '\u200B'
+                    }
+                }
+            });
+            rebuildActiveNotesCache();
+        }
+
+        function applyAllFiltersAndUpdateGame() {
+            updateVisibilityForTypeFilters();
+            updateModeFilterAndFinalizeVisibility();
+            if (isGameMode && gameSequence.length > 0 && currentSequenceIndex < gameSequence.length) {
+                const expectedNote = gameSequence[currentSequenceIndex];
+                const expectedCells = document.querySelectorAll(`.cell[data-note='${expectedNote}']:not(.inactive)`);
+                document.querySelectorAll('.cell.expected-note').forEach(c => c.classList.remove('expected-note'));
+                if (expectedCells.length > 0) {
+                    let visibleExpectedCellExists = false;
+                    expectedCells.forEach(cell => {
+                        if (cell.firstChild && cell.firstChild.nodeValue !== '\u200B') {
+                            cell.classList.add('expected-note');
+                            visibleExpectedCellExists = true
+                        }
+                    });
+                    if (!visibleExpectedCellExists) {
+                        updateGameStatus("statusPitchHiddenByFilter", {
+                            note: displayEnharmonic(expectedNote)
+                        });
+                        stopGame()
+                    }
+                }
+            } else if (!isGameMode && lickNotes.length > 0) {
+                showCurrentLickTarget()
+            }
+        }
+
+        function rebuildActiveNotesCache() {
+            activeHarmonicaNotesCache = [];
+            const seenNotes = new Set();
+            document.querySelectorAll('.cell[data-note]:not(.inactive)').forEach(cell => {
+                const noteTextNode = cell.firstChild;
+                if (noteTextNode && noteTextNode.nodeType === Node.TEXT_NODE && noteTextNode.nodeValue.trim() !== '' && noteTextNode.nodeValue !== '\u200B') {
+                    const noteName = cell.getAttribute('data-note');
+                    if (!seenNotes.has(noteName)) {
+                        const idealFreq = noteToFreq(noteName);
+                        if (idealFreq > 0) {
+                            activeHarmonicaNotesCache.push({
+                                noteName,
+                                idealFreq
+                            });
+                            seenNotes.add(noteName)
+                        }
+                    }
+                }
+            });
+            console.log("Active notes cache rebuilt:", activeHarmonicaNotesCache.map(n => n.noteName));
+        }
+
+        function getClosestNote(freq) {
+            let closestNoteName = null;
+            let minCentDiff = Infinity;
+            const CENT_TOLERANCE = 50;
+            if (activeHarmonicaNotesCache.length === 0) return null;
+            activeHarmonicaNotesCache.forEach(cached => {
+                if (cached.idealFreq <= 0) return;
+                const cents = 1200 * Math.log2(freq / cached.idealFreq);
+                const absCents = Math.abs(cents);
+                if (absCents < CENT_TOLERANCE) {
+                    if (absCents < minCentDiff) {
+                        minCentDiff = absCents;
+                        closestNoteName = cached.noteName
+                    }
+                }
+            });
+            return closestNoteName;
+        }
+
+        function highlight(detectedNote, cents = 0) {
+            document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+            document.querySelectorAll('.key-highlight').forEach(el => el.classList.remove('key-highlight'));
+            document.querySelectorAll('.lick-success-flash, .lick-error-flash').forEach(el => {
+                el.classList.remove('lick-success-flash', 'lick-error-flash')
+            });
+            document.querySelectorAll('.cell .indicator').forEach(indicator => {
+                indicator.style.opacity = 0;
+                indicator.style.transform = 'translateY(-50%)'
+            });
+
+            if (isRecording && detectedNote) {
+                if (detectedNote !== lastNoteForDebounce) {
+                    clearTimeout(recordingDebounceTimer);
+                    lastNoteForDebounce = detectedNote;
+                    recordingDebounceTimer = setTimeout(() => {
+                        if (isRecording && lastNoteForDebounce === detectedNote) {
+                            const tab = findTabByNote(detectedNote);
+                            if (tab) {
+                                recordedTabs.push(tab)
+                            }
+                        }
+                    }, RECORDING_DEBOUNCE_MS)
+                }
+            } else if (isRecording && !detectedNote) {
+                clearTimeout(recordingDebounceTimer);
+                lastNoteForDebounce = null;
+            }
+
+            if (!detectedNote) return;
+
+            const gridCellsToHighlight = document.querySelectorAll(`.cell[data-note='${detectedNote}']:not(.inactive)`);
+            gridCellsToHighlight.forEach(cell => {
+                cell.classList.add('highlight');
+                const bar = cell.querySelector('.indicator');
+                if (bar) {
+                    const cellHeight = cell.getBoundingClientRect().height;
+                    if (cellHeight > 0) {
+                        const clampedCents = Math.max(-50, Math.min(50, cents));
+                        const maxPixelOffset = (cellHeight / 2);
+                        const offsetFromCenter = -(clampedCents / 50) * maxPixelOffset;
+                        if (Math.abs(cents) <= 50.01) {
+                            bar.style.transform = `translateY(calc(-50% + ${offsetFromCenter}px))`;
+                            bar.style.opacity = 1
+                        } else {
+                            bar.style.opacity = 0
+                        }
+                    } else {
+                        bar.style.opacity = 0
+                    }
+                }
+            });
+            document.querySelectorAll(`#chromatic-piano [data-note='${detectedNote}']`).forEach(key => {
+                key.classList.add('key-highlight')
+            });
+        }
+        function parseTabLick(tabString) {
+            const converted = [];
+            const tokens = [...tabString.matchAll(/\([^)]+\)|[^\s()]+/g)].map(match => match[0]);
+            for (let item of tokens) {
+                if (item.startsWith('(') && item.endsWith(')')) {
+                    const inner = item.slice(1, -1).trim();
+                    const innerItems = inner.split(/\s+/);
+                    const chord = [];
+                    for (let innerItem of innerItems) {
+                        const cNote = cHarmonicaNotes[innerItem];
+                        if (cNote) chord.push(transposeNote(cNote, transposeOffset))
+                    }
+                    if (chord.length > 0) converted.push(chord)
+                } else {
+                    const cNote = cHarmonicaNotes[item];
+                    if (cNote) converted.push(transposeNote(cNote, transposeOffset))
+                }
+            }
+            return converted;
+        }
+
+        function setLick() {
+            if (isGameMode) {
+                updateGameStatus("statusLickNotSetGameActive");
+                return
+            }
+            const input = document.getElementById("lick-input").value.trim();
+            if (!input) {
+                lickNotes = [];
+                currentLickIndex = 0;
+                showCurrentLickTarget();
+                updateGameStatus("statusLickCleared");
+                return
+            }
+            lickNotes = parseTabLick(input);
+            if (lickNotes.length === 0) {
+                currentLickIndex = 0;
+                showCurrentLickTarget();
+                updateGameStatus("statusLickInvalid");
+                return
+            }
+            currentLickIndex = 0;
+            lickNotes.forEach(step => {
+                if (Array.isArray(step)) step._played = []
+            });
+            consecutivePitchedFrames = 0;
+            lastProcessedNoteForStep = null;
+            showCurrentLickTarget();
+            updateGameStatus("statusLickSet", {
+                count: lickNotes.length
+            });
+        }
+
+        function showCurrentLickTarget() {
+            document.querySelectorAll('.lick-number').forEach(el => el.remove());
+            document.querySelectorAll('.cell.lick-target').forEach(cell => cell.classList.remove('lick-target'));
+            if (lickNotes.length === 0 || currentLickIndex >= lickNotes.length) return;
+            const targetStep = lickNotes[currentLickIndex];
+            const notesToTarget = Array.isArray(targetStep) ? targetStep : [targetStep];
+            let foundAnyTargetCell = false;
+            const currentStepNumberStr = (currentLickIndex + 1).toString();
+            notesToTarget.forEach(noteName => {
+                const targetCells = document.querySelectorAll(`.cell[data-note='${noteName}']:not(.inactive)`);
+                targetCells.forEach(cell => {
+                    const textNode = cell.firstChild;
+                    if (textNode && textNode.nodeType === Node.TEXT_NODE && textNode.nodeValue !== '\u200B') {
+                        cell.classList.add('lick-target');
+                        foundAnyTargetCell = true;
+                        if (!cell.querySelector(`.lick-number[data-step='${currentStepNumberStr}']`)) {
+                            const numberDiv = document.createElement('div');
+                            numberDiv.className = 'lick-number';
+                            numberDiv.textContent = currentStepNumberStr;
+                            numberDiv.setAttribute('data-step', currentStepNumberStr);
+                            cell.appendChild(numberDiv)
+                        }
+                    }
+                })
+            });
+            if (!foundAnyTargetCell && lickNotes.length > 0 && currentLickIndex < lickNotes.length) {
+                const targetDisplay = formatStepForDisplay(targetStep);
+                updateGameStatus("statusLickTargetHidden", {
+                    target: targetDisplay
+                })
+            }
+        }
+
+        function loadLickFromFile() {
+            const fileInput = document.getElementById('lick-file-input');
+            if (fileInput.files.length === 0) {
+                updateGameStatus("statusFileSelectError");
+                return
+            }
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('lick-input').value = event.target.result;
+                setLick()
+            };
+            reader.onerror = function() {
+                updateGameStatus("statusFileLoadError")
+            };
+            reader.readAsText(file);
+        }
+
+        function startRecording() {
+            recordedTabs = [];
+            isRecording = true;
+            lastNoteForDebounce = null;
+            clearTimeout(recordingDebounceTimer);
+            startRecordBtn.classList.add('is-recording');
+            stopRecordBtn.classList.remove('is-recording');
+            updateGameStatus("statusRecordingStarted");
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            clearTimeout(recordingDebounceTimer);
+            lastNoteForDebounce = null;
+            startRecordBtn.classList.remove('is-recording');
+            updateGameStatus("statusRecordingStopped");
+        }
+
+        function findTabByNote(noteToFind) {
+            for (const tabKey in cHarmonicaNotes) {
+                const cNoteEquivalent = cHarmonicaNotes[tabKey];
+                if (transposeNote(cNoteEquivalent, transposeOffset) === noteToFind) {
+                    return tabKey
+                }
+            }
+            return null;
+        }
+
+        function exportTabsToCSV() {
+            if (recordedTabs.length === 0) {
+                updateGameStatus("statusNoTabsRecorded");
+                return
+            }
+            const textContent = recordedTabs.join(" ");
+            const blob = new Blob([textContent], {
+                type: 'text/plain;charset=utf-8;'
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "mizika_tablari.txt");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            updateGameStatus("statusTabsExported");
+        }
+        function getAvailableNotesForGame() {
+            return activeHarmonicaNotesCache.map(item => item.noteName)
+        }
+
+        function generateSequence(level) {
+            const availableNotes = getAvailableNotesForGame();
+            const length = sequenceLengths[level] || sequenceLengths[1];
+            if (availableNotes.length < 1) {
+                updateGameStatus("statusGameNoActiveNotes");
+                return []
+            }
+            const sequence = [];
+            for (let i = 0; i < length; i++) {
+                sequence.push(availableNotes[Math.floor(Math.random() * availableNotes.length)])
+            }
+            return sequence;
+        }
+
+        function displaySequence(sequence) {
+            clearSequenceDisplay();
+            sequence.forEach((note, index) => {
+                const cells = document.querySelectorAll(`.cell[data-note='${note}']:not(.inactive)`);
+                cells.forEach(cell => {
+                    const textNode = cell.firstChild;
+                    if (textNode && textNode.nodeType === Node.TEXT_NODE && textNode.nodeValue !== '\u200B') {
+                        const dot = document.createElement('div');
+                        dot.className = 'game-sequence-dot';
+                        dot.innerText = index + 1;
+                        cell.appendChild(dot)
+                    }
+                })
+            })
+        }
+
+        function clearSequenceDisplay() {
+            document.querySelectorAll('.game-sequence-dot').forEach(dot => dot.remove());
+            document.querySelectorAll('.cell.expected-note').forEach(cell => cell.classList.remove('expected-note'))
+        }
+
+        function updateGameStatus(keyOrMessage, params = {}) {
+            if (gameStatusDiv) {
+                if (translations[keyOrMessage]) {
+                    gameStatusDiv.innerText = translateText(keyOrMessage, params);
+                    gameStatusDiv.dataset.translateKey = keyOrMessage;
+                    gameStatusDiv.dataset.translateParams = JSON.stringify(params)
+                } else {
+                    gameStatusDiv.innerText = keyOrMessage;
+                    delete gameStatusDiv.dataset.translateKey;
+                    delete gameStatusDiv.dataset.translateParams
+                }
+            }
+        }
+
+        function startGame(level) {
+            if (!isListening) {
+                updateGameStatus("statusGameStartAudioNeeded");
+                return
+            }
+            if (isGameMode) {
+                stopGame();
+                return
+            }
+            lickNotes = [];
+            currentLickIndex = 0;
+            showCurrentLickTarget();
+            isGameMode = true;
+            gameLevel = parseInt(level);
+            gameSequence = generateSequence(gameLevel);
+            currentSequenceIndex = 0;
+            consecutivePitchedFrames = 0;
+            lastProcessedNoteForStep = null;
+            if (gameSequence.length === 0) {
+                isGameMode = false;
+                startGameBtn.innerText = translateText("startGameBtn");
+                document.getElementById('game-level').disabled = false;
+                document.getElementById('transpose').disabled = false;
+                document.querySelectorAll('.filter, .mode-filter').forEach(cb => cb.disabled = false);
+                document.getElementById('lick-input').disabled = false;
+                document.querySelector('.lick-input-controls button:not(.file-load-btn)').disabled = false;
+                document.getElementById('lick-file-input').disabled = false;
+                document.querySelector('.lick-input-controls .file-load-btn').disabled = false;
+                return
+            }
+            displaySequence(gameSequence);
+            updateGameStatus("statusGameStarted", {
+                level: gameLevel,
+                note: displayEnharmonic(gameSequence[0])
+            });
+            document.querySelectorAll(`.cell[data-note='${gameSequence[0]}']:not(.inactive)`).forEach(cell => {
+                if (cell.firstChild && cell.firstChild.nodeValue !== '\u200B') cell.classList.add('expected-note')
+            });
+            startGameBtn.innerText = translateText("stopGameBtn");
+            document.getElementById('game-level').disabled = true;
+            document.getElementById('transpose').disabled = true;
+            document.querySelectorAll('.filter, .mode-filter').forEach(cb => cb.disabled = true);
+            document.getElementById('lick-input').disabled = true;
+            document.querySelector('.lick-input-controls button:not(.file-load-btn)').disabled = true;
+            document.getElementById('lick-file-input').disabled = true;
+            document.querySelector('.lick-input-controls .file-load-btn').disabled = true;
+        }
+
+        function stopGame() {
+            if (!isGameMode && lickNotes.length === 0) return;
+            isGameMode = false;
+            clearSequenceDisplay();
+            if (gameSequence.length > 0) updateGameStatus("statusGameStopped");
+            else if (lickNotes.length > 0 && !isGameMode) updateGameStatus("statusLickModeStopped");
+            gameSequence = [];
+            currentSequenceIndex = 0;
+            consecutivePitchedFrames = 0;
+            lastProcessedNoteForStep = null;
+            if (lickNotes.length > 0 && !isGameMode) {
+                lickNotes = [];
+                currentLickIndex = 0;
+                showCurrentLickTarget()
+            }
+            startGameBtn.innerText = translateText("startGameBtn");
+            document.getElementById('game-level').disabled = false;
+            document.getElementById('transpose').disabled = false;
+            document.querySelectorAll('.filter, .mode-filter').forEach(cb => cb.disabled = false);
+            document.getElementById('lick-input').disabled = false;
+            document.querySelector('.lick-input-controls button:not(.file-load-btn)').disabled = false;
+            document.getElementById('lick-file-input').disabled = false;
+            document.querySelector('.lick-input-controls .file-load-btn').disabled = false;
+            highlight(null);
+        }
+        
+        function advanceToNextStep() {
+            const isLickModeActive = !isGameMode && lickNotes.length > 0;
+            if (isGameMode) {
+                const completedNote = gameSequence[currentSequenceIndex];
+                const completedIndex = currentSequenceIndex + 1;
+                const completedCells = document.querySelectorAll(`.cell[data-note='${completedNote}']`);
+                completedCells.forEach(cell => {
+                    cell.classList.remove('expected-note');
+                    const dot = cell.querySelector(`.game-sequence-dot`);
+                    if (dot && parseInt(dot.innerText) === completedIndex) {
+                        dot.remove();
+                    }
+                });
+                currentSequenceIndex++;
+                if (currentSequenceIndex >= gameSequence.length) {
+                    updateGameStatus("statusGameComplete");
+                    setTimeout(stopGame, 1500);
+                } else {
+                    const nextNote = gameSequence[currentSequenceIndex];
+                    updateGameStatus("statusGameCorrectNote", {
+                        note: displayEnharmonic(nextNote)
+                    });
+                    const nextExpectedCells = document.querySelectorAll(`.cell[data-note='${nextNote}']:not(.inactive)`);
+                    let nextVisible = false;
+                    nextExpectedCells.forEach(cell => {
+                        if (cell.firstChild && cell.firstChild.nodeValue !== '\u200B') {
+                            cell.classList.add('expected-note');
+                            nextVisible = true;
+                        }
+                    });
+                    if (!nextVisible) {
+                        updateGameStatus("statusPitchHiddenByFilter", {
+                            note: displayEnharmonic(nextNote)
+                        });
+                        stopGame();
+                    }
+                }
+            } else if (isLickModeActive) {
+                currentLickIndex++;
+                if (currentLickIndex >= lickNotes.length) {
+                    updateGameStatus("statusLickComplete");
+                    lickNotes = [];
+                    currentLickIndex = 0;
+                    showCurrentLickTarget();
+                    setTimeout(() => updateGameStatus(isListening ? "statusMicActive" : ""), 2000);
+                } else {
+                    showCurrentLickTarget();
+                    if (document.querySelector('.cell.lick-target')) {
+                        const nextExpected = lickNotes[currentLickIndex];
+                        const expectedDisplay = formatStepForDisplay(nextExpected);
+                        updateGameStatus("statusGameCorrectNote", {
+                            note: expectedDisplay
+                        });
+                    }
+                }
+            }
+            consecutivePitchedFrames = 0;
+            lastProcessedNoteForStep = null;
+        }
+
+        // --- JSON Recording Logic (Değişiklik yok) ---
+        let isPitchDetectionPaused = false;
+        let playbackTimeouts = [];
+        let isJsonRecording = false;
+        let jsonRecordedTabs = [];
+        let importedJsonSequence = [];
+        let currentSustainedNoteForJson = null;
+        let noteStartTimeForJson = 0;
+        let currentNotePitchData = [];
+        let freqBuffer = [];
+        const FREQ_BUFFER_SIZE = 1;
+
+        const startJsonRecordBtn = document.getElementById('start-json-record-btn');
+        const stopJsonRecordBtn = document.getElementById('stop-json-record-btn');
+        const exportJsonBtn = document.getElementById('export-json-btn');
+        const playJsonBtn = document.getElementById('play-json-btn');
+        const stopJsonBtn = document.getElementById('stop-json-btn');
+        
+        function getMinNoteDuration() {
+            const precision = document.getElementById('recording-precision')?.value || 'high';
+            switch (precision) {
+                case 'normal': return 90;
+                case 'max': return 30;
+                case 'high': default: return 50;
+            }
+        }
+        
+        function startJsonRecording() {
+            jsonRecordedTabs = [];
+            importedJsonSequence = []; 
+            isJsonRecording = true;
+            currentSustainedNoteForJson = null;
+            noteStartTimeForJson = 0;
+            currentNotePitchData = [];
+            
+            startJsonRecordBtn.classList.add('is-recording');
+            startJsonRecordBtn.disabled = true;
+            stopJsonRecordBtn.disabled = false;
+            exportJsonBtn.disabled = true;
+            playJsonBtn.disabled = true;
+            
+            updateGameStatus('statusJsonRecordingStarted');
+        }
+
+        function endSustainedJsonNote() {
+            if (currentSustainedNoteForJson) {
+                const duration = Date.now() - noteStartTimeForJson;
+                if (duration > getMinNoteDuration()) {
+                    jsonRecordedTabs.push({ 
+                        note: currentSustainedNoteForJson, 
+                        startTime: noteStartTimeForJson, 
+                        duration: duration,
+                        pitchData: currentNotePitchData
+                    });
+                }
+                currentSustainedNoteForJson = null;
+                currentNotePitchData = [];
+                freqBuffer = [];
+            }
+        }
+
+
+        function stopJsonRecording() {
+            if (!isJsonRecording) return;
+            
+            endSustainedJsonNote();
+            isJsonRecording = false;
+
+            startJsonRecordBtn.classList.remove('is-recording');
+            startJsonRecordBtn.disabled = false;
+            stopJsonRecordBtn.disabled = true;
+            
+            const hasRecording = jsonRecordedTabs.length > 0;
+            exportJsonBtn.disabled = !hasRecording;
+            playJsonBtn.disabled = !hasRecording;
+
+            updateGameStatus('statusJsonRecordingStopped');
+        }
+
+        function exportJsonTabs() {
+            if (jsonRecordedTabs.length === 0) {
+                updateGameStatus('statusJsonNoTabs');
+                return;
+            }
+            
+            const firstNoteTime = jsonRecordedTabs[0].startTime;
+            const normalizedTabs = jsonRecordedTabs.map(item => ({
+                note: item.note,
+                startTime: item.startTime - firstNoteTime,
+                duration: item.duration,
+                pitchData: item.pitchData
+            }));
+
+            const jsonContent = JSON.stringify(normalizedTabs, null, 2);
+            const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `mizikapp_sequence_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            updateGameStatus('statusJsonExported');
+        }
+
+        function handleJsonImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = JSON.parse(e.target.result);
+                    if (Array.isArray(content) && content.every(item => 'note' in item && 'startTime' in item && 'duration' in item && 'pitchData' in item)) {
+                        importedJsonSequence = content;
+                        jsonRecordedTabs = [];
+                        playJsonBtn.disabled = false;
+                        exportJsonBtn.disabled = true;
+                        updateGameStatus('statusJsonFileLoaded');
+                    } else {
+                         updateGameStatus('statusJsonFileError');
+                         playJsonBtn.disabled = true;
+                    }
+                } catch (err) {
+                    console.error("JSON parsing error:", err);
+                    updateGameStatus('statusJsonFileError');
+                    playJsonBtn.disabled = true;
+                }
+            };
+            reader.readAsText(file);
+             event.target.value = '';
+        }
+
+        function visualPlaybackHighlight(note, add) {
+             const elements = document.querySelectorAll(`.cell[data-note='${note}'], #chromatic-piano [data-note='${note}']`);
+             elements.forEach(el => {
+                 el.classList.toggle('playback-highlight', add);
+             });
+        }
+        
+        function updatePlaybackIndicator(note, freq) {
+            const idealFreq = noteToFreq(note);
+            if (!idealFreq) return;
+            const cents = 1200 * Math.log2(freq / idealFreq);
+            
+            document.querySelectorAll(`.cell[data-note='${note}']:not(.inactive)`).forEach(cell => {
+                const indicator = cell.querySelector('.indicator');
+                if (indicator) {
+                    indicator.style.backgroundColor = 'white';
+                    const cellHeight = cell.getBoundingClientRect().height;
+                    const clampedCents = Math.max(-50, Math.min(50, cents));
+                    const maxPixelOffset = (cellHeight / 2);
+                    const offsetFromCenter = -(clampedCents / 50) * maxPixelOffset;
+                    indicator.style.transform = `translateY(calc(-50% + ${offsetFromCenter}px))`;
+                    indicator.style.opacity = 1;
+                }
+            });
+        }
+        
+        function hideAllPlaybackIndicators() {
+             document.querySelectorAll('.cell .indicator').forEach(indicator => {
+                 indicator.style.opacity = 0;
+                 indicator.style.backgroundColor = '';
+            });
+        }
+
+        function stopJsonPlayback() {
+             isPitchDetectionPaused = false;
+             playbackTimeouts.forEach(clearTimeout);
+             playbackTimeouts = [];
+             audioEngine.stopAllSounds();
+             document.querySelectorAll('.playback-highlight').forEach(el => el.classList.remove('playback-highlight'));
+             hideAllPlaybackIndicators();
+             playJsonBtn.disabled = (importedJsonSequence.length === 0 && jsonRecordedTabs.length === 0);
+             stopJsonBtn.style.display = 'none';
+             if(gameStatusDiv.innerText === translateText('statusJsonPlaybackMuted')) {
+                 updateGameStatus('statusJsonPlaybackStopped');
+             }
+        }
+
+        function playJsonSequence() {
+            const playbackRate = parseFloat(document.getElementById('playback-speed').value) || 1;
+            const soundType = document.getElementById('sound-type').value;
+
+            let sequenceToPlay = importedJsonSequence.length > 0 
+                ? importedJsonSequence 
+                : jsonRecordedTabs.map(item => ({
+                    ...item, 
+                    startTime: item.startTime - (jsonRecordedTabs[0]?.startTime || 0)
+                }));
+            
+            if (!sequenceToPlay || sequenceToPlay.length === 0) {
+                updateGameStatus('statusJsonNotLoaded');
+                return;
+            }
+            
+            stopJsonPlayback(); 
+            audioEngine.init();
+            isPitchDetectionPaused = true;
+            playJsonBtn.disabled = true;
+            stopJsonBtn.style.display = 'block';
+            updateGameStatus('statusJsonPlaybackMuted');
+
+            sequenceToPlay.forEach(noteEvent => {
+                 const initialFreq = noteEvent.pitchData[0]?.freq;
+                const startTimeout = setTimeout(() => {
+                    visualPlaybackHighlight(noteEvent.note, true);
+                    audioEngine.startSound(noteEvent.note, initialFreq, soundType);
+                    if(noteEvent.pitchData.length > 1) {
+                        for(let i = 1; i < noteEvent.pitchData.length; i++){
+                            const pitchPoint = noteEvent.pitchData[i];
+                             const pitchTimeout = setTimeout(() => {
+                                 audioEngine.updatePitch(noteEvent.note, pitchPoint.freq);
+                                 updatePlaybackIndicator(noteEvent.note, pitchPoint.freq);
+                             }, pitchPoint.time / playbackRate);
+                             playbackTimeouts.push(pitchTimeout);
+                        }
+                    }
+                }, noteEvent.startTime / playbackRate);
+                playbackTimeouts.push(startTimeout);
+
+                const endTimeout = setTimeout(() => {
+                    visualPlaybackHighlight(noteEvent.note, false);
+                    audioEngine.stopSound(noteEvent.note);
+                    hideAllPlaybackIndicators();
+                }, (noteEvent.startTime + noteEvent.duration) / playbackRate);
+                 playbackTimeouts.push(endTimeout);
+            });
+            
+            const totalDuration = Math.max(0, ...sequenceToPlay.map(n => n.startTime + n.duration));
+            const finalTimeout = setTimeout(() => {
+                isPitchDetectionPaused = false;
+                playJsonBtn.disabled = false;
+                stopJsonBtn.style.display = 'none';
+                updateGameStatus('statusJsonPlayFinished');
+            }, (totalDuration / playbackRate) + 200);
+            playbackTimeouts.push(finalTimeout);
+        }
+        
+        /**
+         * The main loop for capturing and processing audio.
+         * This function now only sends data to the worker.
+         */
+        function detectPitch() {
+             if (isPitchDetectionPaused || !analyser || !audioBuffer || !isListening || !audioContext || audioContext.state !== 'running' || !pitchWorker) {
+                 if (isListening) rafId = requestAnimationFrame(detectPitch);
+                 return;
+             }
+
+            analyser.getFloatTimeDomainData(audioBuffer);
+            pitchWorker.postMessage({ buffer: audioBuffer }); // Send buffer to worker
+
+            if (isListening) {
+                rafId = requestAnimationFrame(detectPitch);
+            }
+        }
+        
+        /**
+         * This function now handles the results from the pYIN worker.
+         * @param {number} detectedFreqHz The frequency detected by the worker.
+         * @param {number} probability The confidence of the detection.
+         */
+        function handlePitchResult(detectedFreqHz, probability) {
+            // Check for volume first (a quick silence check)
+            let peakVolume = -Infinity;
+            const freqData = new Float32Array(analyser.frequencyBinCount);
+            analyser.getFloatFrequencyData(freqData);
+            for (const db of freqData) {
+                if (db > peakVolume) peakVolume = db;
+            }
+
+            const isCurrentlySilent = (peakVolume < MIN_DECIBELS || probability < P_YIN_PROBABILITY_THRESHOLD);
+            
+            if (isCurrentlySilent) {
+                consecutivePitchedFrames = 0;
+                lastProcessedNoteForStep = null;
+                freqDisplay.innerHTML = `${translateText('freqLabel')}: ${translateText('noFreqLabel')}`;
+                highlight(null);
+                endSustainedJsonNote();
+            } else {
+                consecutivePitchedFrames++;
+                const note = getClosestNote(detectedFreqHz);
+
+                if (isJsonRecording) {
+                    if (note !== currentSustainedNoteForJson) {
+                        endSustainedJsonNote();
+                        if(note) {
+                            currentSustainedNoteForJson = note;
+                            noteStartTimeForJson = Date.now();
+                            currentNotePitchData.push({ time: 0, freq: detectedFreqHz });
+                        }
+                    } else if (currentSustainedNoteForJson) {
+                        currentNotePitchData.push({ time: Date.now() - noteStartTimeForJson, freq: detectedFreqHz });
+                    }
+                }
+
+                if (note) {
+                    const ideal = noteToFreq(note);
+                    const cents = (ideal > 0 && detectedFreqHz > 0) ? 1200 * Math.log2(detectedFreqHz / ideal) : 0;
+                    freqDisplay.innerHTML = `${translateText('noteLabel')}: ${displayEnharmonic(note)} | ${probability.toFixed(2)} | ${cents.toFixed(0)} ${translateText('centsUnit')}`;
+                    highlight(note, cents);
+
+                    const isGameOrLickActive = isGameMode || (lickNotes.length > 0 && currentLickIndex < lickNotes.length);
+                    if (isGameOrLickActive && consecutivePitchedFrames >= minSustainedFrames && note !== lastProcessedNoteForStep) {
+                        let currentExpected = isGameMode ? gameSequence[currentSequenceIndex] : lickNotes[currentLickIndex];
+                        const isChord = Array.isArray(currentExpected);
+                        let match = false;
+
+                        if (isChord) {
+                            if (currentExpected.includes(note) && (!currentExpected._played || !currentExpected._played.includes(note))) {
+                                if (!currentExpected._played) currentExpected._played = [];
+                                currentExpected._played.push(note);
+                                const remainingCount = currentExpected.length - currentExpected._played.length;
+                                if (remainingCount > 0) {
+                                    updateGameStatus("statusLickChordPartPlayed", {
+                                        playedNote: displayEnharmonic(note),
+                                        remainingNotes: remainingCount
+                                    });
+                                } else {
+                                    match = true;
+                                }
+                            }
+                        } else {
+                            if (note === currentExpected) {
+                                match = true;
+                             }
+                        }
+
+                        if (match) {
+                            lastProcessedNoteForStep = note;
+                            const cellsToFlash = document.querySelectorAll(`.cell[data-note='${note}']:not(.inactive)`);
+                            cellsToFlash.forEach(cell => {
+                                cell.classList.add('lick-success-flash');
+                                setTimeout(() => cell.classList.remove('lick-success-flash'), 300);
+                            });
+                            advanceToNextStep();
+                        } else if (!isChord && note !== currentExpected) {
+                            const expectedDisplay = displayEnharmonic(currentExpected);
+                            updateGameStatus("statusGameWrongNote", {
+                                expected: expectedDisplay,
+                                played: displayEnharmonic(note)
+                            });
+                            document.querySelectorAll('.cell.lick-target, .cell.expected-note').forEach(cell => {
+                                cell.classList.add('lick-error-flash');
+                                setTimeout(() => cell.classList.remove('lick-error-flash'), 300);
+                            });
+                        }
+                    }
+                } else {
+                    freqDisplay.innerHTML = `${translateText('freqLabel')}: ${detectedFreqHz.toFixed(1)} ${translateText('freqUnit')} (${translateText('unmatchedLabel')})`;
+                    highlight(null);
+                    endSustainedJsonNote();
+                }
+            }
+        }
+
+        async function stopAudioCapture(customMessageKey = null) {
+            if (!isListening && !audioStream && !audioContext) return;
+            const wasTabAudioWithVideo = audioStream && audioStream.getVideoTracks().length > 0;
+            let finalMessageKey = customMessageKey;
+            if (!finalMessageKey) {
+                finalMessageKey = wasTabAudioWithVideo ? "statusTabCaptureStopped" : "statusMicStopped";
+            }
+            if(isJsonRecording) stopJsonRecording();
+            stopJsonPlayback();
+            isListening = false;
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = null;
+            if (pitchWorker) {
+                pitchWorker.terminate();
+                pitchWorker = null;
+            }
+            if (analyser) analyser.disconnect();
+            if (audioStream) audioStream.getTracks().forEach(track => track.stop());
+            audioEngine.stopAllSounds();
+            analyser = null;
+            audioStream = null;
+            audioBuffer = null;
+            
+            if (wasTabAudioWithVideo) {
+                webcamWindowElement.style.display = 'none';
+                webcamVideoElement.srcObject = null;
+            }
+            clearTimeout(recordingDebounceTimer);
+            lastNoteForDebounce = null;
+            document.getElementById('mic-start-btn').innerText = translateText("micStartBtn");
+            document.getElementById('tab-audio-start-btn').innerText = translateText("tabAudioStartBtn");
+            freqDisplay.innerHTML = `${translateText('freqLabel')}: ${translateText('noFreqLabel')}`;
+            highlight(null);
+            updateGameStatus(finalMessageKey);
+            consecutivePitchedFrames = 0;
+            lastProcessedNoteForStep = null;
+            if (isGameMode) stopGame();
+            else if (lickNotes.length > 0) {
+                lickNotes = [];
+                currentLickIndex = 0;
+                showCurrentLickTarget();
+                updateGameStatus("statusLickModeStopped");
+            }
+        }
+
+        async function startAudioCapture(isMic) {
+            if (isListening) await stopAudioCapture();
+            try {
+                audioEngine.init();
+
+                if (isMic) {
+                    audioStream = await navigator.mediaDevices.getUserMedia({
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                    });
+                    if (webcamToggleButton.classList.contains('active')) {
+                        startWebcam();
+                    }
+                } else {
+                    updateGameStatus("statusTabSelectionPending");
+                    audioStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                    const audioTracks = audioStream.getAudioTracks();
+                    const videoTracks = audioStream.getVideoTracks();
+
+                    if (!audioTracks || audioTracks.length === 0) {
+                        videoTracks.forEach(track => track.stop());
+                        await stopAudioCapture("statusTabNoAudioTrack");
+                        return;
+                    }
+                    if (videoTracks.length > 0) {
+                        webcamVideoElement.srcObject = audioStream;
+                        webcamVideoElement.muted = true;
+                        webcamVideoElement.play().catch(e => {
+                            console.error(translateText('statusWebcamOpenError'), e);
+                            updateGameStatus('statusWebcamOpenError');
+                        });
+                        webcamWindowElement.style.display = 'block';
+                    }
+                    audioStream.getTracks().forEach(track => {
+                        track.onended = () => { if (isListening) stopAudioCapture("statusTabCaptureEnded"); }
+                    });
+                }
+                
+                if (!audioContext || audioContext.state === 'closed') {
+                    audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioContext.state === 'suspended') await audioContext.resume();
+
+                const source = audioContext.createMediaStreamSource(audioStream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048; // pYIN works well with smaller buffer sizes
+                audioBuffer = new Float32Array(analyser.fftSize);
+                source.connect(analyser);
+
+                // --- YENİ: p-YIN Worker'ı Başlat ---
+                const workerBlob = new Blob([pYINWorkerScript], { type: 'application/javascript' });
+                const workerUrl = URL.createObjectURL(workerBlob);
+                pitchWorker = new Worker(workerUrl);
+
+                // Worker'dan gelen mesajları dinle
+                pitchWorker.onmessage = (event) => {
+                    const { pitch, probability } = event.data;
+                    handlePitchResult(pitch, probability);
+                };
+                
+                // Worker'ı yapılandır
+                pitchWorker.postMessage({ 
+                    sampleRate: audioContext.sampleRate,
+                    bufferSize: analyser.fftSize
+                });
+
+                consecutivePitchedFrames = 0;
+                lastProcessedNoteForStep = null;
+                isListening = true;
+                detectPitch(); // Analiz döngüsünü başlat
+                
+                document.getElementById('mic-start-btn').innerText = translateText(isMic ? 'micStopBtn' : 'micStartBtn');
+                document.getElementById('tab-audio-start-btn').innerText = translateText(isMic ? 'tabAudioStartBtn' : 'tabAudioStopBtn');
+                updateGameStatus(isGameMode ? "statusMicActiveGameOn" : (isMic ? "statusMicActive" : "statusTabCapturing"));
+
+            } catch (error) {
+                console.error("Audio capture error:", error);
+                let msgKey = isMic ? "statusMicError" : "statusTabCaptureError";
+                let params = { errorDetails: `${error.name}` };
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    msgKey = "statusWebcamPermissionDenied";
+                    params = {};
+                }
+                await stopAudioCapture(msgKey);
+            }
+        }
+        
+        // --- Event Listeners (Değişiklik yok) ---
+        document.getElementById('mic-start-btn').addEventListener('click', () => {
+             const isCurrentlyListening = isListening && (!audioStream || audioStream.getVideoTracks().length === 0);
+             isCurrentlyListening ? stopAudioCapture() : startAudioCapture(true);
+        });
+        document.getElementById('tab-audio-start-btn').addEventListener('click', () => {
+            const isCapturingTab = isListening && audioStream && audioStream.getVideoTracks().length > 0;
+            isCapturingTab ? stopAudioCapture() : startAudioCapture(false);
+        });
+        startGameBtn.addEventListener('click', () => {
+            startGame(gameLevelSelect.value);
+        });
+        gameLevelSelect.addEventListener('change', (e) => {
+            gameLevel = parseInt(e.target.value);
+            if (!isGameMode) updateGameStatus("statusGameLevelSet", {
+                level: gameLevel
+            });
+        });
+        document.querySelectorAll('.filter').forEach(cb => {
+            cb.addEventListener('change', () => {
+                applyAllFiltersAndUpdateGame();
+                if (!isGameMode && lickNotes.length > 0) {
+                    lickNotes = [];
+                    currentLickIndex = 0;
+                    showCurrentLickTarget();
+                    updateGameStatus("statusFilterChangedLickReset");
+                    lastProcessedNoteForStep = null;
+                }
+            });
+        });
+        document.querySelectorAll('.mode-filter').forEach(cb => {
+            cb.addEventListener('change', e => {
+                if (e.target.checked) {
+                    document.querySelectorAll('.mode-filter').forEach(otherCb => {
+                        if (otherCb !== e.target) otherCb.checked = false;
+                    });
+                }
+                applyAllFiltersAndUpdateGame();
+                if (!isGameMode && lickNotes.length > 0) {
+                    lickNotes = [];
+                    currentLickIndex = 0;
+                    showCurrentLickTarget();
+                    updateGameStatus("statusModeFilterChangedLickReset");
+                    lastProcessedNoteForStep = null;
+                }
+            });
+        });
+        document.getElementById('transpose').addEventListener('change', e => {
+            const selected = e.target.value;
+            const centerNote = 'C4';
+            const sBase = selected.replace(/[0-9]/g, '');
+            const sOct = parseInt(selected.replace(/[^0-9]/g, ''));
+            const sIdx = semitones.indexOf(sBase) + sOct * 12;
+            const cBase = centerNote.replace(/[0-9]/g, '');
+            const cOct = parseInt(centerNote.replace(/[^0-9]/g, ''));
+            const cIdx = semitones.indexOf(cBase) + cOct * 12;
+            transposeOffset = sIdx - cIdx;
+            renderGrid();
+            renderChromaticPiano();
+            updateCircleLabels(selected);
+            rebuildActiveNotesCache();
+            if (isGameMode) {
+                updateGameStatus("statusTransposeChangedGameStop");
+                stopGame();
+            } else if (lickNotes.length > 0) {
+                lickNotes = [];
+                currentLickIndex = 0;
+                showCurrentLickTarget();
+                updateGameStatus("statusTransposeChangedLickReset");
+                lastProcessedNoteForStep = null;
+            }
+        });
+        document.getElementById('start-json-record-btn').addEventListener('click', startJsonRecording);
+        document.getElementById('stop-json-record-btn').addEventListener('click', stopJsonRecording);
+        document.getElementById('export-json-btn').addEventListener('click', exportJsonTabs);
+        document.getElementById('import-json-btn').addEventListener('click', () => {
+             document.getElementById('import-json-input').click();
+        });
+        document.getElementById('import-json-input').addEventListener('change', handleJsonImport);
+        document.getElementById('play-json-btn').addEventListener('click', playJsonSequence);
+        document.getElementById('stop-json-btn').addEventListener('click', stopJsonPlayback);
+
+        // --- Beşliler Çemberi (Değişiklik yok) ---
+        const circleNoteNames = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'];
+        const circleDisplayLabels = { 'C': 'C', 'G': 'G', 'D': 'D', 'A': 'A', 'E': 'E', 'B': 'B', 'F#': 'F#', 'C#': 'C#', 'G#': 'A♭', 'D#': 'E♭', 'A#': 'B♭', 'F': 'F' };
+        const validTransposeNotesForCircle = ['G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4'];
+        const svgNS = "http://www.w3.org/2000/svg";
+        const circleCenterX = 150, circleCenterY = 150, circleRadius = 120;
+        const circleNotesGroup = document.getElementById("circle-notes");
+        function updateCircleLabels(selectedHarmonicaKey) {
+            const rootNoteOfHarmonica = selectedHarmonicaKey.replace(/[0-9]/g, '');
+            const rootIndexInCircle = circleNoteNames.indexOf(rootNoteOfHarmonica);
+            const textElements = circleNotesGroup.querySelectorAll("text");
+            circleNoteNames.forEach((noteName, i) => {
+                const textEl = textElements[i];
+                if (!textEl) return;
+                const positionNumber = ((i - rootIndexInCircle + 12) % 12) + 1;
+                const x = textEl.getAttribute("x");
+                textEl.innerHTML = '';
+                const labelSpan = document.createElementNS(svgNS, "tspan");
+                labelSpan.setAttribute("x", x);
+                labelSpan.setAttribute("dy", "0em");
+                labelSpan.textContent = circleDisplayLabels[noteName] || noteName;
+                textEl.appendChild(labelSpan);
+                const numberSpan = document.createElementNS(svgNS, "tspan");
+                numberSpan.setAttribute("x", x);
+                numberSpan.setAttribute("dy", "1.2em");
+                numberSpan.setAttribute("fill", "#0074D9");
+                numberSpan.setAttribute("font-size", "12px");
+                numberSpan.textContent = positionNumber.toString();
+                textEl.appendChild(numberSpan)
+            })
+        }
+        circleNoteNames.forEach((note, i) => {
+            const angle = (i / 12) * 2 * Math.PI - (Math.PI / 2);
+            const x = circleCenterX + circleRadius * Math.cos(angle);
+            const y = circleCenterY + circleRadius * Math.sin(angle);
+            const text = document.createElementNS(svgNS, "text");
+            text.setAttribute("x", x);
+            text.setAttribute("y", y);
+            text.setAttribute("data-note", note);
+            text.addEventListener('click', () => {
+                audioEngine.init();
+                const clickedNoteBase = text.getAttribute('data-note');
+                const dropdown = document.getElementById('transpose');
+                let targetOptionValue = null;
+                for (const validNote of validTransposeNotesForCircle) {
+                    if (validNote.startsWith(clickedNoteBase)) {
+                        targetOptionValue = validNote;
+                        break
+                    }
+                }
+                if (!targetOptionValue) {
+                    for (let opt of dropdown.options) {
+                        if (opt.value.startsWith(clickedNoteBase)) {
+                            targetOptionValue = opt.value;
+                            break
+                        }
+                    }
+                }
+                if (targetOptionValue) {
+                    dropdown.value = targetOptionValue;
+                    dropdown.dispatchEvent(new Event('change'))
+                }
+            });
+            circleNotesGroup.appendChild(text)
+        });
+
+        window.onload = () => {
+            applyTranslations();
+            renderGrid();
+            renderChromaticPiano();
+            updateCircleLabels(document.getElementById('transpose').value);
+            rebuildActiveNotesCache();
+            document.getElementById('startRecordBtn').classList.remove('is-recording');
+            document.getElementById('stopRecordBtn').classList.remove('is-recording');
+            document.getElementById('stop-json-record-btn').disabled = true;
+            document.getElementById('export-json-btn').disabled = true;
+            document.getElementById('play-json-btn').disabled = true;
+            document.getElementById('stop-json-btn').style.display = 'none';
+            const wcToggleButton = document.getElementById('webcam-toggle-button');
+            const wcWindowElement = document.getElementById('webcam-window');
+            if (wcWindowElement && wcToggleButton) {
+                stopWebcam();
+                const effectiveWebcamWidth = 330 + (5 * 2);
+                const effectiveWebcamHeight = 240 + (5 * 2) + 20;
+                let initialLeft = Math.max(10, window.innerWidth - effectiveWebcamWidth - 20);
+                let initialTop = Math.max(10, window.innerHeight - effectiveWebcamHeight - 20);
+                wcWindowElement.style.left = `${initialLeft}px`;
+                wcWindowElement.style.top = `${initialTop}px`;
+                xOffset = wcWindowElement.offsetLeft;
+                yOffset = wcWindowElement.offsetTop;
+            }
+        };
+    </script>
+</body>
+</html>
